@@ -1,0 +1,57 @@
+# Architecture
+
+## System boundaries
+
+```text
+Browser
+  └─ same-origin GET /dashboard-v4
+       └─ FastAPI app: app.main_v3:app (port 8000)
+            ├─ Existing v3 routes ─────── /api/...
+            └─ Mounted foundation app ── /v4/api/v1/...
+            ├─ /api/v1/evaluations ── deterministic security engine
+            │                          ├─ SQLite policy + agent state
+            │                          ├─ persisted evaluation records
+            │                          └─ append-only-by-convention audit events
+            ├─ /api/v1/simulation ───── actual engine scenarios + scorecard
+            ├─ /api/v1/near ─────────── read-only NEAR Testnet JSON-RPC client
+            └─ dashboard read models ── overview, agents, threats, audit, settings
+```
+
+The v4 page is a static HTML/CSS/JavaScript document. It builds dynamic text with DOM text nodes; it does not insert API strings through `innerHTML`. The static page is served by the same FastAPI origin to avoid cross-origin configuration for the local demo.
+
+## Components
+
+- **API composition:** `backend/app/main_v3.py` retains existing v3 routes, serves the v4 page, and mounts `backend/app/foundation/main.py` under `/v4`. The foundation app owns its database engine, SQLite migrations, NEAR client, routes, and safe request logging.
+- **Schemas:** Pydantic models validate evaluation, policy, agent and human-review inputs. Unknown fields are rejected. Signing and credential fields are not accepted.
+- **Policy engine:** `security_engine.py` applies deterministic server rules. AI output is not an input to the decision function.
+- **Approval workflow:** `approval_workflow.py` enforces expiry and re-evaluates current blocking policy before an admin approval is accepted.
+- **Persistence:** SQLAlchemy stores policy configuration, registered agent state, evaluations, simulation runs, and audit events in SQLite.
+- **NEAR client:** `near_client.py` allows only `status`, `query`, and `tx` methods. It verifies Testnet identity before state/status lookups and uses a bounded timeout.
+- **Simulation lab:** `simulation_lab.py` executes named scenario inputs through the policy engine, checks expected decisions and control-specific checks, measures duration, and persists results.
+- **Dashboard projections:** `dashboard_routes.py` derives metrics and event lists from persisted state. Telegram explicitly reports unconfigured.
+
+## Evaluation flow
+
+1. Validate the request and required `Idempotency-Key`.
+2. Return the original result for the same idempotency key and payload; reject reuse with a different payload.
+3. Read persisted policy and agent status.
+4. Evaluate prompt patterns, tool authorization, contract account format and allowlist, recipient blocklist/allowlist, single and daily limits, duplicate window, velocity, and agent freeze state.
+5. Choose `BLOCK` for failed hard checks, `REVIEW` above the auto-approval threshold, or `APPROVE` if the required checks pass.
+6. Persist the decision and audit event in the same database transaction.
+7. Do not sign or submit a blockchain transaction for any decision.
+
+Human approval uses a separate authenticated workflow. A review expires after 15 minutes. Before approval, the service rechecks current hard policy; an expired or newly blocked request becomes `BLOCK` and is audited.
+
+## NEAR query flow
+
+The client validates account/hash input, calls `status` and requires `chain_id == "testnet"`, then performs the requested read-only query. Balance values are converted from yoctoNEAR using decimal arithmetic. Contract status is based on the returned code hash. Transaction explorer URLs are formed only after `tx` status data matches both the requested hash and sender account.
+
+## Data and operations
+
+The default database URL is SQLite. Startup creates tables and runs additive compatibility migrations. There is no migration history/version table yet. Evaluation and policy operations are serialized with a process-local lock; this does not provide distributed coordination across multiple server processes. Use a single process for the demo.
+
+The audit table supports investigation but is not cryptographically chained or immutable. Hash-like values are not used to claim tamper-proof storage.
+
+## Deployment shape
+
+Use `uvicorn app.main_v3:app --app-dir backend --host 127.0.0.1 --port 8000` for the combined local demo. The dashboard uses the mounted `/v4` API. Do not expose the service publicly without TLS, operator authentication hardening, origin/rate controls, database backups, and production concurrency review. The v4 admin mechanism is one shared bearer token configured through `AGENTGUARD_ADMIN_TOKEN`.

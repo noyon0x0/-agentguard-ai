@@ -1,0 +1,73 @@
+# API Reference
+
+Interactive OpenAPI is generated at `/docs`; JSON schema is at `/openapi.json`. All endpoints below are on the foundation app origin.
+
+## Authentication
+
+Send `Authorization: Bearer <AGENTGUARD_ADMIN_TOKEN>` to operator-only routes. No token is returned by the API. Missing admin configuration returns `503`; invalid or missing credentials return `401`.
+
+## Health and dashboard projections
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/v1/health` | No | SQLite connectivity and execution-disabled indicator. |
+| GET | `/api/v1/overview` | No | Persisted evaluation counts, volume, latest evaluation. |
+| GET | `/api/v1/agents` | No | Registered agent frozen state and persisted evaluation counts. |
+| GET | `/api/v1/threats` | No | Local policy rules and recent persisted BLOCK records; no external feed. `limit` 1–100. |
+| GET | `/api/v1/settings` | No | Safe runtime settings; secrets omitted. |
+| GET | `/api/v1/telegram/status` | No | Reports Telegram as not configured. |
+| GET | `/api/v1/audit/summary` | No | Audit event count and latest timestamp. |
+
+## Policy and evaluations
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/v1/policy` | No | Current policy, lists, and thresholds. |
+| PUT | `/api/v1/policy` | Admin | Validate and update policy, wallet lists, tools, and contract list. |
+| PUT | `/api/v1/agents/{agent_id}` | Admin | Freeze/unfreeze an agent. |
+| POST | `/api/v1/evaluations` | No | Evaluate and persist a request; requires unique `Idempotency-Key` header. Returns `202`. |
+| GET | `/api/v1/evaluations/pending` | Admin | List pending human reviews. |
+| POST | `/api/v1/evaluations/{request_id}/decision` | Admin | Approve/reject a review, subject to expiry and current policy checks. |
+| GET | `/api/v1/audit?limit=100` | Admin | Recent persisted audit events; limit 1–1000. |
+
+Example request:
+
+```http
+POST /api/v1/evaluations
+Idempotency-Key: demo-request-0001
+Content-Type: application/json
+```
+
+```json
+{
+  "sender": "agent.testnet",
+  "agent_id": "agent.testnet",
+  "recipient": "treasury.testnet",
+  "amount_near": 1.25,
+  "prompt": "Routine scheduled payment."
+}
+```
+
+The response contains `request_id`, `decision`, `risk_score`, `explanation`, `checks`, and `transaction_execution: "disabled"`. A policy `APPROVE` is not a transaction receipt.
+
+## NEAR Testnet (read-only)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/v1/near/health` | No | Query RPC `status`, require `chain_id=testnet`, record latest check and latency. |
+| GET | `/api/v1/near/accounts/{account_id}` | No | Finalized `view_account` and balance metadata. |
+| GET | `/api/v1/near/contracts/{account_id}` | No | Code-hash-based contract presence on Testnet. |
+| GET | `/api/v1/near/transactions/{tx_hash}?sender_account_id=...` | No | Read-only final transaction status; returns Testnet explorer URL only after hash/signer match. |
+
+Errors return structured codes such as `INVALID_NEAR_ACCOUNT_ID`, `NEAR_ACCOUNT_NOT_FOUND`, `NEAR_WRONG_NETWORK`, and `NEAR_RPC_UNAVAILABLE`. No transaction submission route exists.
+
+## Security Simulation Lab
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/v1/simulation/scenarios` | Admin | Scenario manifest and expected decisions. |
+| POST | `/api/v1/simulation/run/{scenario}` | Admin | Run one scenario through the real policy engine. |
+| POST | `/api/v1/simulation/run-all` | Admin | Execute all 12 scenarios and return results plus scorecard. |
+| GET | `/api/v1/simulation/scorecard` | Admin | Persistent counts and recent results. |
+
+Each run records a unique UUID test ID, expected/actual decision, pass/fail, reason, elapsed milliseconds, underlying evaluation IDs, and a `SIMULATION_TEST` audit event. Duplicate and rapid-burst scenarios create multiple underlying evaluation records. All are non-executing.

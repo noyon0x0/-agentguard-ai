@@ -1,0 +1,78 @@
+# AgentGuard AI
+
+**A NEAR Testnet read-only security prototype for evaluating agent payment requests.**
+
+AgentGuard AI records explainable `APPROVE`, `REVIEW`, and `BLOCK` decisions using deterministic server-side rules. It does not sign, authorize, or submit blockchain transactions. It does not use an AI model to make security decisions.
+
+The v4 dashboard is served by the FastAPI foundation app at `/dashboard-v4`. The earlier dashboard files and API entry points remain in the repository for comparison.
+
+> **Hackathon prototype:** The policy engine, local audit store, and tests demonstrate a security workflow. They are not a production financial authorization service and do not provide tamper-proof audit guarantees.
+
+## Project status
+
+| Status | Features |
+| --- | --- |
+| **Implemented** | FastAPI foundation; Pydantic validation; SQLite and SQLAlchemy; deterministic payment policy engine; allowlist/blocklist; limits; velocity and duplicate detection; frozen agents; admin-protected policy changes and approvals; expiring human review; audit events; v4 dashboard; persisted simulation scorecard; read-only NEAR Testnet client. |
+| **Tested** | Backend unit and integration tests; all 12 security simulation scenarios; mocked NEAR RPC health, account, contract, transaction and error responses; local v4 page route and JavaScript syntax. The last backend test run reported **43 passed, 1 warning**. |
+| **Mocked** | NEAR RPC responses in automated integration tests. Simulation scenarios run against the real local policy engine but use generated inputs and test agents. |
+| **Live-verified (point-in-time)** | An earlier read-only request to NEAR Testnet returned `chain_id=testnet`; an earlier `view_account` query for `wrap.testnet` returned account balance metadata and a deployed contract code hash. On the latest local dashboard capture (2026-11-12), the same configured RPC returned `NEAR_RPC_UNAVAILABLE` (HTTP 503). Availability is therefore not currently verified. |
+| **Unverified** | Current/ongoing NEAR RPC availability, production deployment, multi-process policy consistency, browser behavior across the full device/browser matrix, third-party RPC reliability, and external Telegram delivery. |
+| **Planned** | Versioned migrations, stronger operator identity and roles, durable/immutable audit storage, production-grade concurrency controls, optional real alert delivery, and broader browser accessibility testing. |
+
+See [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md), [Security Policy](docs/SECURITY_POLICY.md), [API Reference](docs/API.md), [Demo Walkthrough](docs/DEMO.md), [Known Limitations](docs/LIMITATIONS.md), and the [Submission Checklist](docs/SUBMISSION_CHECKLIST.md).
+
+## Quick start
+
+Requirements: Python 3.12 or newer and PowerShell on Windows. From the repository root:
+
+```powershell
+python -m venv backend\.venv
+backend\.venv\Scripts\Activate.ps1
+python -m pip install -r backend\requirements-foundation.txt
+$env:AGENTGUARD_ADMIN_TOKEN = 'replace-with-a-long-random-local-demo-token'
+uvicorn app.foundation.main:app --app-dir backend --reload --host 127.0.0.1 --port 8001
+```
+
+Open these local URLs:
+
+- Dashboard: `http://127.0.0.1:8001/dashboard-v4`
+- Interactive API docs: `http://127.0.0.1:8001/docs`
+- OpenAPI schema: `http://127.0.0.1:8001/openapi.json`
+- Database health: `http://127.0.0.1:8001/api/v1/health`
+- NEAR RPC health: `http://127.0.0.1:8001/api/v1/near/health`
+
+The database defaults to `./agentguard_foundation.db` relative to the process working directory. Set `AGENTGUARD_DATABASE_URL` to another SQLite URL to change it. See [Installation](docs/INSTALLATION.md) for the complete configuration and startup steps.
+
+## Verify the project
+
+From `backend/`, run:
+
+```powershell
+.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir tests -q
+```
+
+The flags disable pytest cache and temporary-directory plugins for environments that restrict those paths. The project test suite includes mocked RPC tests; it does not broadcast transactions. Test results change as code changes, so the output above is the last observed run, not a guarantee for future revisions.
+
+Run the Security Simulation Lab from the dashboard after entering the configured admin token under **System Settings**, or use the protected `POST /api/v1/simulation/run-all` endpoint. It writes simulation results, underlying policy evaluations, and audit events to the configured SQLite database. Scenario pass/fail is calculated from the actual engine response and required check, not from a preset success value.
+
+## NEAR integration boundary
+
+The NEAR client permits only read-only `status`, `query`, and `tx` status methods. It checks the RPC `chain_id` before account and transaction lookups. Account lookup uses finalized `view_account`; transaction lookup uses status at `FINAL`. The explorer URL is returned only after the RPC result’s hash and signer match the request. See the [NEAR RPC account documentation](https://docs.near.org/api/rpc/contracts) and [transaction status documentation](https://docs.near.org/api/rpc/transactions).
+
+There is no transaction signing, broadcasting, wallet connection, private-key handling, or automatic execution code in the v4 foundation app. An `APPROVE` is a policy decision only. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
+
+## Screenshots
+
+See [verified local screenshots](docs/screenshots/README.md). They were captured from the locally running app and show its actual empty-database and RPC-unavailable states; no seeded metrics or success state is implied.
+
+## Exact next steps for submission
+
+1. On the final checkout, follow [Installation](docs/INSTALLATION.md) from a clean virtual environment and run the full suite using [Test Instructions](docs/TESTING.md).
+2. Start the app on loopback, check API health and OpenAPI docs, and run the 12-scenario suite through the authenticated Simulation Lab. Save the resulting actual scorecard and audit output for the demo.
+3. Recheck the Testnet RPC immediately before the presentation. If it remains unavailable, show the documented error state and identify the automated RPC checks as mocked.
+4. Fill in the team, repository, project category, demo link and event-specific form fields after confirming the current hackathon rules and deadline.
+5. Review the final Git diff, license and assets, README claims, screenshots, and [submission checklist](docs/SUBMISSION_CHECKLIST.md); submit only the revision that was reviewed.
+
+## License
+
+MIT; see [LICENSE](LICENSE).

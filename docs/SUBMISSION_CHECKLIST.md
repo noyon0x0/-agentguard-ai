@@ -1,0 +1,39 @@
+# NEAR Hackathon Submission Checklist
+
+## Project package
+
+- [ ] Confirm repository URL, team name, project category, and required submission form fields.
+- [ ] Confirm hackathon rules, deadline, judging requirements, demo duration, and whether a deployed URL is required.
+- [x] Provide project README, architecture, threat model, security policy, API reference, setup, tests, demo, and limitations.
+- [x] Keep prior dashboards and APIs; v4 is additive.
+- [x] Review screenshots in `docs/screenshots/`; they contain no secrets or misleading transaction state.
+- [ ] Confirm license and attribution requirements for all project assets.
+
+## Demo readiness
+
+- [ ] Install from a fresh virtual environment using the documented command.
+- [ ] Set a new admin token outside the repository.
+- [ ] Start the app bound to loopback unless a reviewed deployment environment is used.
+- [ ] Confirm `/v4/api/v1/health`, `/v4/docs`, `/dashboard-v4`, and `/v4/api/v1/near/health`.
+- [ ] Run all 12 simulations and capture the API scorecard result.
+- [ ] Confirm audit events are visible in the configured database.
+- [ ] Confirm Telegram is described as not configured.
+- [ ] Do not present `APPROVE` as a signed authorization or on-chain transfer.
+
+## Security and accuracy
+
+- [x] No private keys or wallet credentials in source or demo flow.
+- [x] No signing or transaction submission method in the v4 foundation app.
+- [x] NEAR responses fail closed on wrong network, timeout, malformed response, or RPC error.
+- [x] Claims separate automated mocked RPC tests from point-in-time live RPC checks.
+- [ ] Re-run the complete test suite on the final submission commit.
+- [ ] Review `docs/LIMITATIONS.md` before making security claims.
+- [ ] Check the git diff and ensure local SQLite databases, tokens, and temporary artifacts are not submitted.
+
+## Final review
+
+- [ ] Verify README backup/current README changes are intentional.
+- [ ] Verify screenshots are actual local app captures and match the documented run state.
+- [ ] Verify install instructions work in a clean environment.
+- [ ] Verify demo output matches the submitted source revision.
+- [ ] Submit only after all unchecked items required by the event are resolved.
