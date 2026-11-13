@@ -308,6 +308,7 @@ def resolve_hitl(item: ApprovalAction):
     return rec
 
 
+@app.get("/", include_in_schema=False)
 @app.get("/dashboard-v4", include_in_schema=False)
 def serve_dashboard_v4():
     dashboard_file = Path(__file__).resolve().parents[2] / "frontend" / "dashboard_v4.html"

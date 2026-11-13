@@ -257,14 +257,9 @@
   </div>
   <script>
     "use strict";
-    // The v4 UI targets the combined main_v3 host on port 8000 by default.
-    // Set window.AGENTGUARD_API_BASE before this script to override the API base.
-    const servedByAgentGuard = /^https?:$/.test(window.location.protocol)
-      && window.location.port === "8000"
-      && window.location.pathname === "/dashboard-v4";
-    const API_BASE = (window.AGENTGUARD_API_BASE || (
-      servedByAgentGuard ? `${window.location.origin}/v4` : "http://127.0.0.1:8000/v4"
-    )).replace(/\/+$/, "");
+    // The dashboard and API share an origin in the combined FastAPI app.
+    // Set window.AGENTGUARD_API_BASE before this script only for an explicit override.
+    const API_BASE = (window.AGENTGUARD_API_BASE || `${window.location.origin}/v4`).replace(/\/+$/, "");
     let adminToken = "";
     let auditCache = [];
     let activityCache = [];
