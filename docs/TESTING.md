@@ -2,13 +2,14 @@
 
 ## Run the suite
 
-From `backend/` with the project virtual environment:
+From the repository root with the project virtual environment:
 
 ```powershell
-.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir tests -q
+backend\.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir -q
 ```
 
-The plugin flags avoid restricted cache and temporary directories in this environment. On a normal developer machine, `python -m pytest tests -q` is also suitable.
+The root `pytest.ini` adds `backend` to the import path and selects `backend/tests`.
+The plugin flags avoid restricted cache and temporary directories in this environment.
 
 ## Run the v4 browser smoke test
 
@@ -23,7 +24,9 @@ The smoke test launches the combined FastAPI app against a temporary SQLite data
 
 ## Latest verification record
 
-Complete suite on 2026-11-13: `66 passed, 1 warning in 19.05s`, exit code 0, using the elevated local subprocess permission for Playwright. The single warning is Starlette's `TestClient`/`httpx` deprecation. A sandbox-only run had 65 passed and failed to launch Playwright's bundled Node process with Windows `WinError 5`; the browser test passed when rerun with subprocess permission. NEAR RPC tests use mocked provider replies and are not live network evidence.
+Clean-environment suite on 2026-11-13: `70 passed, 1 warning in 22.21s`, exit code 0, in a disposable Python 3.12 environment installed from `requirements-foundation.txt` and `requirements-browser.txt`. `pip check` found no broken requirements; the Edge browser smoke test was included. The final full working-tree rerun passed: `70 passed, 1 warning in 20.76s`, exit code 0. The single warning is Starlette's `TestClient`/`httpx` deprecation. Automated NEAR RPC tests use mocked provider replies and are not live network evidence.
+
+Separate point-in-time read-only check on 2026-11-13: `/v4/api/v1/near/health` returned HTTP 200 with `network=testnet` and 3813 ms latency; `/v4/api/v1/near/accounts/wrap.testnet` returned HTTP 200 with Testnet account metadata. This confirms RPC status/account queries at that time only; it is not a transaction test or an availability guarantee.
 
 ## Coverage inventory
 

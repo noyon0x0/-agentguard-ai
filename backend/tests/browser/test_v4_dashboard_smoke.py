@@ -132,9 +132,8 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
         )
         try:
             page = browser.new_page()
-            page.add_init_script(
-                f"window.AGENTGUARD_API_BASE = {base_url + '/v4'!r};"
-            )
+            page_errors: list[str] = []
+            page.on("pageerror", lambda error: page_errors.append(str(error)))
             # The dashboard automatically checks NEAR health during load. Stub
             # that read-only status request so this UI test is deterministic and
             # never depends on or contacts an external chain endpoint.
@@ -162,6 +161,10 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                 )
                 else None,
             )
+
+            root_response = requests.get(f"{base_url}/", timeout=5)
+            assert root_response.status_code == 200
+            assert "AgentGuard AI v4" in root_response.text
 
             response = page.goto(f"{base_url}/dashboard-v4", wait_until="domcontentloaded")
             assert response is not None and response.status == 200
@@ -217,6 +220,7 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
             finally:
                 connection.close()
             assert set(persisted) == {(approved_id, "APPROVE"), (blocked_id, "BLOCK")}
+            assert not page_errors, f"Dashboard JavaScript errors: {page_errors}"
 
             assert admin_calls
             authenticated_calls = {

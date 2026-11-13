@@ -1,8 +1,9 @@
 # AgentGuard backend foundation
 
-This additive foundation is a separate FastAPI application. It does not replace
-`app.main`, `app.main_v2`, or `app.main_v3`, so the existing dashboards and
-entry points remain available.
+This additive foundation is a standalone FastAPI application for isolated
+foundation use. The primary combined dashboard server is `app.main_v3:app`
+on port 8000, as documented in the repository README. This standalone app does
+not replace the combined server or the existing dashboard entry points.
 
 ## Install and run
 
@@ -11,7 +12,7 @@ new app:
 
 ```powershell
 python -m pip install -r backend\requirements-foundation.txt
-uvicorn app.foundation.main:app --app-dir backend --reload --host 127.0.0.1 --port 8001
+python -m uvicorn app.foundation.main:app --app-dir backend --host 127.0.0.1 --port 8001
 ```
 
 The additive v4 dashboard is served by the API at
@@ -24,7 +25,7 @@ Configuration uses environment variables:
 | --- | --- | --- |
 | `AGENTGUARD_APP_NAME` | `AgentGuard AI API` | OpenAPI title |
 | `AGENTGUARD_ENVIRONMENT` | `development` | Deployment environment label |
-| `AGENTGUARD_DATABASE_URL` | `sqlite:///./agentguard_foundation.db` | SQLAlchemy database URL |
+| `AGENTGUARD_DATABASE_URL` | `backend/agentguard_foundation.db` | SQLite database URL; the default resolves from the project location |
 | `AGENTGUARD_LOG_LEVEL` | `INFO` | Log threshold |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | Read-only NEAR RPC endpoint |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | RPC request timeout, from 0.1 to 60 seconds |

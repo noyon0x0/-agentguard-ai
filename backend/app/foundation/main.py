@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 
 from .config import Settings
 from .dashboard_routes import router as dashboard_router
@@ -93,7 +93,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def serve_dashboard_v4():
         if not dashboard_file.is_file():
             raise HTTPException(status_code=404, detail={"code": "DASHBOARD_NOT_FOUND"})
-        return FileResponse(dashboard_file, media_type="text/html")
+        html = dashboard_file.read_text(encoding="utf-8")
+        combined_api_base = '<meta name="agentguard-api-base" content="/v4">'
+        standalone_api_base = '<meta name="agentguard-api-base" content="">'
+        if combined_api_base not in html:
+            raise RuntimeError("dashboard API base marker is missing")
+        return HTMLResponse(content=html.replace(combined_api_base, standalone_api_base, 1))
 
     install_error_handlers(app)
     return app

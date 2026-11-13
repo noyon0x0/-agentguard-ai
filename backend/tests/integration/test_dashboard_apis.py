@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from fastapi.testclient import TestClient
 
@@ -66,11 +67,40 @@ def test_dashboard_aggregates_update_from_real_evaluations():
     assert len(threats["recent_blocks"]) == 1
 
 
+def test_sqlite_initialization_preserves_records_across_app_restarts():
+    repository_root = Path(__file__).resolve().parents[3]
+    with TemporaryDirectory(prefix="agentguard-persistence-", dir=repository_root) as temporary_directory:
+        database_path = Path(temporary_directory) / "nested" / "agentguard.sqlite3"
+        settings = Settings(database_url=f"sqlite:///{database_path.as_posix()}", log_level="CRITICAL")
+        with TestClient(create_app(settings)) as first_client:
+            response = first_client.post(
+                "/api/v1/evaluations",
+                headers={"Idempotency-Key": "restart-persist-001"},
+                json={
+                    "agent_id": "agent.testnet",
+                    "sender": "agent.testnet",
+                    "recipient": "attacker.testnet",
+                    "amount_near": 1,
+                    "prompt": "normal request",
+                },
+            )
+            assert response.status_code == 202
+
+        with TestClient(create_app(settings)) as second_client:
+            overview = second_client.get("/api/v1/overview").json()
+
+        assert overview["total_requests"] == 1
+        assert overview["blocked_count"] == 1
+
+
 def test_v4_dashboard_is_served_without_replacing_legacy_page():
     with client_for_dashboard() as client:
         response = client.get("/dashboard-v4")
+        overview = client.get("/api/v1/overview")
 
     assert response.status_code == 200
+    assert '<meta name="agentguard-api-base" content="">' in response.text
+    assert overview.status_code == 200
     assert "AgentGuard AI v4" in response.text
     assert "Transaction Security Center" in response.text
     assert "Telegram Monitoring" in response.text

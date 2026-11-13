@@ -1,8 +1,17 @@
 # Demo Walkthrough
 
+## Recording
+
+No verified AgentGuard demo recording is linked in this repository. The
+accessible MP4 files checked during the final audit showed unrelated content;
+do not use them as the project demo. Add the verified recording at
+`docs/demo/agentguard-ai-v4-demo.mp4` or replace this note with its verified
+public URL before submission. Confirm playback, duration, public access, and
+that no credentials or personal information are visible.
+
 ## Before presenting
 
-1. Start the foundation app on loopback using [Installation](INSTALLATION.md).
+1. Start the combined dashboard/API app on loopback using [Installation](INSTALLATION.md).
 2. Open `/dashboard-v4` and confirm API status is online.
 3. Enter the demo admin token in **System Settings**. The page keeps it in memory only. Confirm policy, human approvals, audit, and simulation lab load.
 4. Check **NEAR Testnet Monitor**. A live status response must identify `testnet`; otherwise describe the RPC as unavailable and do not present account data as verified.

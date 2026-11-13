@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="agentguard-api-base" content="/v4">
   <meta name="color-scheme" content="dark">
   <title>AgentGuard AI v4 | Security Operations</title>
   <style>
@@ -259,7 +260,8 @@
     "use strict";
     // The dashboard and API share an origin in the combined FastAPI app.
     // Set window.AGENTGUARD_API_BASE before this script only for an explicit override.
-    const API_BASE = (window.AGENTGUARD_API_BASE || `${window.location.origin}/v4`).replace(/\/+$/, "");
+    const apiBaseMeta = document.querySelector('meta[name="agentguard-api-base"]');
+    const API_BASE = (window.AGENTGUARD_API_BASE ?? `${window.location.origin}${apiBaseMeta?.content ?? "/v4"}`).replace(/\/+$/, "");
     let adminToken = "";
     let auditCache = [];
     let activityCache = [];

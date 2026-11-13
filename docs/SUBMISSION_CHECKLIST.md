@@ -3,7 +3,7 @@
 ## Project package
 
 - [ ] Confirm repository URL, team name, project category, and required submission form fields.
-- [ ] Confirm hackathon rules, deadline, judging requirements, demo duration, and whether a deployed URL is required.
+- [ ] Confirm hackathon rules, deadline, judging requirements, demo duration, deployed URL requirements, and whether a demo video is required (including length, format, and hosting/access rules).
 - [x] Provide project README, architecture, threat model, security policy, API reference, setup, tests, demo, and limitations.
 - [x] Keep prior dashboards and APIs; v4 is additive.
 - [x] Review screenshots in `docs/screenshots/`; they contain no secrets or misleading transaction state.
@@ -11,7 +11,7 @@
 
 ## Demo readiness
 
-- [ ] Install from a fresh virtual environment using the documented command.
+- [x] Install from a fresh virtual environment using the documented requirements; `pip check` found no broken dependencies.
 - [ ] Set a new admin token outside the repository.
 - [ ] Start the app bound to loopback unless a reviewed deployment environment is used.
 - [ ] Confirm `/v4/api/v1/health`, `/v4/docs`, `/dashboard-v4`, and `/v4/api/v1/near/health`.
@@ -26,9 +26,9 @@
 - [x] No signing or transaction submission method in the v4 foundation app.
 - [x] NEAR responses fail closed on wrong network, timeout, malformed response, or RPC error.
 - [x] Claims separate automated mocked RPC tests from point-in-time live RPC checks.
-- [ ] Re-run the complete test suite on the final submission commit.
+- [x] Re-run the complete test suite on the final pre-commit source: 70 passed, 1 existing deprecation warning.
 - [ ] Review `docs/LIMITATIONS.md` before making security claims.
-- [ ] Check the git diff and ensure local SQLite databases, tokens, and temporary artifacts are not submitted.
+- [x] Review the intended Git diff and exclude local SQLite databases, tokens, and temporary artifacts from the staged submission.
 
 ## Final review
 
