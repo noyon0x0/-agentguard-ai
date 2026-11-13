@@ -17,7 +17,7 @@ class SafeJsonFormatter(logging.Formatter):
                 "event": record.getMessage(),
                 **{
                     key: getattr(record, key)
-                    for key in ("method", "status_code", "error_type")
+                    for key in ("method", "status_code", "error_type", "request_id")
                     if getattr(record, key, None) is not None
                 },
             },

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from .models import AgentState, AuditEvent, PolicyConfiguration, SecurityEvaluation
 from .routes import database_session
 from .security_engine import PROMPT_ATTACK_PATTERNS, ensure_default_policy
+from .telegram import telegram_configured
 
 router = APIRouter(prefix="/api/v1")
 
@@ -35,6 +36,7 @@ def dashboard_overview(db: Session = Depends(database_session)) -> dict:
             func.max(SecurityEvaluation.created_at),
         )
     ).one()
+    policy = db.get(PolicyConfiguration, 1)
     return {
         "total_requests": result[0] or 0,
         "approved_count": result[1] or 0,
@@ -43,6 +45,8 @@ def dashboard_overview(db: Session = Depends(database_session)) -> dict:
         "evaluated_amount_near": round(float(result[4] or 0), 8),
         "last_evaluation_at": _utc(result[5]),
         "execution_enabled": False,
+        "policy_version": policy.policy_version if policy else 1,
+        "global_kill_switch": policy.global_kill_switch if policy else True,
     }
 
 
@@ -135,12 +139,13 @@ def threat_center(db: Session = Depends(database_session), limit: int = 30) -> d
 
 
 @router.get("/telegram/status", tags=["monitoring"])
-def telegram_status() -> dict:
+def telegram_status(request: Request) -> dict:
+    configured = telegram_configured(request.app.state.settings)
     return {
-        "enabled": False,
-        "configured": False,
-        "status": "not_configured",
-        "message": "Telegram delivery is not configured for this backend.",
+        "enabled": configured,
+        "configured": configured,
+        "status": "configured" if configured else "not_configured",
+        "message": "Server-side Telegram alerts are configured." if configured else "Telegram delivery is not configured for this backend.",
     }
 
 
@@ -155,6 +160,7 @@ def system_settings(request: Request) -> dict:
         "near_rpc_timeout_seconds": settings.near_rpc_timeout_seconds,
         "near_network_required": "testnet",
         "admin_auth_configured": bool(settings.admin_token),
+        "telegram_configured": telegram_configured(settings),
         "transaction_signing_enabled": False,
         "transaction_submission_enabled": False,
     }

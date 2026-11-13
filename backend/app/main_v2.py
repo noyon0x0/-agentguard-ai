@@ -85,27 +85,25 @@ def compute_sha256_proof(payload: dict) -> str:
 
 def check_near_testnet_account(account_id: str) -> dict:
     try:
-        rpc_url = "https://near.org"
-        data = json.dumps({
-            "jsonrpc": "2.0",
-            "id": "agentguard",
-            "method": "query",
-            "params": {
-                "request_type": "view_account",
-                "finality": "final",
-                "account_id": account_id,
-            },
-        }).encode("utf-8")
-        req = urllib.request.Request(rpc_url, data=data, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            res = json.loads(resp.read().decode("utf-8"))
-            if "result" in res:
-                yocto = int(res["result"].get("amount", 0))
-                balance_near = round(yocto / 1e24, 4)
-                return {"exists": True, "balance_near": balance_near, "network": "NEAR Testnet"}
-            return {"exists": False, "balance_near": 0.0, "network": "NEAR Testnet"}
+        url = "https://rpc.testnet.near.org"
+        def call(method, params=None):
+            payload = {"jsonrpc": "2.0", "id": "agentguard-readonly", "method": method}
+            if params is not None:
+                payload["params"] = params
+            request = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(request, timeout=3) as response:
+                return json.loads(response.read().decode("utf-8"))
+        status = call("status")
+        if status.get("result", {}).get("chain_id") != "testnet":
+            return {"exists": None, "balance_near": None, "network": "wrong_network", "verified": False}
+        account = call("query", {"request_type": "view_account", "finality": "final", "account_id": account_id})
+        result = account.get("result")
+        if not isinstance(result, dict):
+            return {"exists": False, "balance_near": None, "network": "testnet", "verified": True}
+        balance = int(result.get("amount", "0")) / 1e24
+        return {"exists": True, "balance_near": round(balance, 8), "network": "testnet", "verified": True}
     except Exception:
-        return {"exists": True, "balance_near": 42.5, "network": "NEAR Testnet (Simulated Fallback)"}
+        return {"exists": None, "balance_near": None, "network": "unavailable", "verified": False, "status": "rpc_unavailable"}
 
 
 @app.get("/")
@@ -208,9 +206,9 @@ def evaluate_transaction(tx: TransactionRequest):
         )
     else:
         decision = "APPROVE"
-        pipeline_steps["crypto_sign"] = "SIGNED_SHA256"
+        pipeline_steps["crypto_sign"] = "EXECUTION_DISABLED"
         AGENTS_DB[tx.agent_id]["daily_spent"] = round(agent["daily_spent"] + tx.amount_near, 2)
-        explanation = "All 4 security layers passed. Cryptographic execution token issued."
+        explanation = "Policy checks passed. No transaction was signed or submitted."
 
     record = {
         "tx_id": tx_id,
@@ -243,8 +241,8 @@ def resolve_human_approval(item: ApprovalAction):
     record = PENDING_QUEUE.pop(item.tx_id)
     if item.action == "APPROVE":
         record["decision"] = "APPROVE"
-        record["pipeline"]["crypto_sign"] = "HUMAN_APPROVED"
-        record["explanation"] = "Manually verified and approved by Human Security Operator."
+        record["pipeline"]["crypto_sign"] = "HUMAN_APPROVED_POLICY_ONLY"
+        record["explanation"] = "Human reviewer approved the policy request; no transaction was signed or submitted."
         agent_id = record["agent_id"]
         if agent_id in AGENTS_DB:
             AGENTS_DB[agent_id]["daily_spent"] = round(AGENTS_DB[agent_id]["daily_spent"] + record["amount_near"], 2)

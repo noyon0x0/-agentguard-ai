@@ -15,6 +15,6 @@ def test_migrations_add_new_simulation_and_policy_columns_to_legacy_sqlite():
     evaluation_columns = {item["name"] for item in inspector.get_columns("security_evaluations")}
     policy_columns = {item["name"] for item in inspector.get_columns("policy_configuration")}
 
-    assert {"tool_name", "contract_account", "review_expires_at"} <= evaluation_columns
-    assert {"allowed_tools", "allowed_contracts"} <= policy_columns
+    assert {"tool_name", "contract_account", "review_expires_at", "network", "policy_version"} <= evaluation_columns
+    assert {"allowed_tools", "allowed_contracts", "policy_version", "global_kill_switch"} <= policy_columns
     engine.dispose()

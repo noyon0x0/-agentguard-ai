@@ -11,7 +11,8 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from .approval_workflow import resolve_human_decision
-from .models import AgentState, AuditEvent, SecurityEvaluation, SimulationRun
+from .audit_chain import append_audit_event
+from .models import AgentState, AuditEvent, PolicyConfiguration, SecurityEvaluation, SimulationRun
 from .routes import database_session, require_admin
 from .schemas import EvaluationIntake
 from .security_engine import ensure_default_policy, evaluate_policy, payload_fingerprint
@@ -49,6 +50,7 @@ def _record_evaluation(
     payload: EvaluationIntake,
 ) -> SecurityEvaluation:
     result = evaluate_policy(db, payload)
+    policy = db.get(PolicyConfiguration, 1)
     request_id = str(uuid.uuid4())
     record = SecurityEvaluation(
         request_id=request_id,
@@ -58,6 +60,8 @@ def _record_evaluation(
         agent_id=payload.agent_id,
         recipient=payload.recipient,
         amount_near=payload.amount_near,
+        network=payload.network,
+        policy_version=policy.policy_version if policy else 1,
         prompt=payload.prompt,
         memo=payload.memo,
         tool_name=payload.tool_name,
@@ -71,13 +75,10 @@ def _record_evaluation(
         else None,
     )
     db.add(record)
-    db.add(
-        AuditEvent(
-            request_id=request_id,
-            event_type="POLICY_DECISION",
-            decision=result.decision,
-            details={"risk_score": result.risk_score, "checks": result.checks, "simulation_test_id": test_id},
-        )
+    append_audit_event(
+        db, request_id=request_id, event_type="POLICY_DECISION", decision=result.decision,
+        details={"risk_score": result.risk_score, "checks": result.checks, "simulation_test_id": test_id},
+        agent_id=payload.agent_id, policy_version=policy.policy_version if policy else 1,
     )
     db.commit()
     db.refresh(record)
@@ -184,20 +185,17 @@ def execute_scenario(db: Session, scenario: str) -> dict:
             request_ids=[record.request_id for record in records],
         )
     )
-    db.add(
-        AuditEvent(
-            request_id=test_id,
-            event_type="SIMULATION_TEST",
-            decision=final.status,
-            details={
+    policy = db.get(PolicyConfiguration, 1)
+    append_audit_event(
+        db, request_id=test_id, event_type="SIMULATION_TEST", decision=final.status,
+        details={
                 "scenario": scenario,
                 "expected_decision": expected,
                 "actual_decision": final.status,
                 "passed": passed,
                 "execution_ms": elapsed_ms,
                 "request_ids": [record.request_id for record in records],
-            },
-        )
+            }, agent_id=final.agent_id, policy_version=policy.policy_version if policy else 1,
     )
     db.commit()
     return {

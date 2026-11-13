@@ -38,6 +38,8 @@ These defaults are demo policy values, not recommendations or guarantees. Policy
 
 Policy updates, agent state changes, pending review resolution, audit listing, and simulation operations require the bearer token. A fresh local demo defaults to `agentguard-local-demo-token`; set `AGENTGUARD_ADMIN_TOKEN` to a unique secret outside source control for any shared deployment. The default is a shared local-demo credential, not a production identity system.
 
+The global kill switch is admin-controlled, increments the policy version, and causes the backend evaluation engine to block new v4 requests. Policy changes and kill-switch changes create version snapshots. Human approval rechecks current hard policy and cannot override a current block. `APPROVE` remains policy-only; signing and transaction submission are disabled.
+
 ## NEAR read-only policy
 
 The NEAR client permits only the `status`, `query`, and `tx` JSON-RPC methods. Network identity must report `testnet`. Account queries use `view_account` at finality. Transaction status is queried at `FINAL` and must return the requested hash and signer before an explorer URL is returned. Timeouts, malformed results, RPC errors, and wrong network fail closed. No transaction broadcast or signing API is exposed by this app.

@@ -12,12 +12,11 @@ The v4 dashboard is served by `app.main_v3:app` at `/dashboard-v4` on port 8000.
 
 | Status | Features |
 | --- | --- |
-| **Implemented** | FastAPI foundation; Pydantic validation; SQLite and SQLAlchemy; deterministic payment policy engine; allowlist/blocklist; limits; velocity and duplicate detection; frozen agents; admin-protected policy changes and approvals; expiring human review; audit events; v4 dashboard; persisted simulation scorecard; read-only NEAR Testnet client. |
-| **Tested** | Backend unit and integration tests, including file-backed SQLite concurrency checks; all 12 deterministic simulation scenarios; mocked NEAR RPC health, account, contract, transaction, timeout and error responses; headless Edge v4 dashboard smoke test. The current suite result is recorded below. |
-| **Mocked** | NEAR RPC responses in automated integration tests. Simulation scenarios run against the real local policy engine but use generated inputs and test agents. |
-| **Live-verified (point-in-time)** | On 2026-11-12, a read-only JSON-RPC `status` request to `https://rpc.testnet.near.org` returned HTTP 200 and `chain_id=testnet`; a finalized `view_account` query for public account `wrap.testnet` returned balance, code-hash and storage-usage fields. No transaction lookup was made live. This does not guarantee ongoing RPC availability. |
-| **Unverified** | Current/ongoing NEAR RPC availability, production deployment, multi-process policy consistency, browser behavior across the full device/browser matrix, third-party RPC reliability, and external Telegram delivery. |
-| **Planned** | Versioned migrations, stronger operator identity and roles, durable/immutable audit storage, production-grade concurrency controls, optional real alert delivery, and broader browser accessibility testing. |
+| **Implemented** | FastAPI foundation; deterministic server policy; validation, SQLite persistence, evaluation idempotency, agent freeze, global kill switch, policy revisions, protected human approvals, correlated request IDs, persisted simulations, sanitized public activity, linked SHA-256 audit events with verification/export, optional server-side Telegram alerts, and read-only NEAR client. |
+| **Tested** | Results from the latest locally executed test commands are recorded below; browser-test restrictions and any skips are called out explicitly. |
+| **Mocked** | Automated NEAR RPC tests use mocked provider replies. Simulations use generated requests but execute the real local policy engine. Telegram delivery tests must mock the provider; no real delivery is implied. |
+| **Unverified** | A live NEAR RPC response in the current environment, actual Telegram delivery, browser execution when Windows blocks the Playwright subprocess, deployment security, and multi-process consistency. The configured proxy currently points to unreachable `127.0.0.1:9`. |
+| **Planned / limited** | A SHA-256 chain detects edits but SQLite remains operator-editable; no external immutable anchor/signature exists. Authentication is one shared bearer token, migrations are additive rather than managed by Alembic, and public threat intelligence is not connected. |
 
 See [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md), [Security Policy](docs/SECURITY_POLICY.md), [API Reference](docs/API.md), [Demo Walkthrough](docs/DEMO.md), [Known Limitations](docs/LIMITATIONS.md), and the [Submission Checklist](docs/SUBMISSION_CHECKLIST.md).
 
@@ -53,7 +52,7 @@ The database defaults to `./agentguard_foundation.db` relative to the process wo
 | `AGENTGUARD_ENVIRONMENT` | `development` | Runtime environment label. |
 | `AGENTGUARD_LOG_LEVEL` | `INFO` | Structured log level. |
 
-The local token is intended for loopback demos only. Keep Uvicorn bound to `127.0.0.1` for local use, and use a unique token outside the local demo. Full steps are in [Installation](docs/INSTALLATION.md).
+The local token is intended for loopback demos only. Keep Uvicorn bound to `127.0.0.1` for local use, and use a unique token outside the local demo. Optional Telegram settings are `AGENTGUARD_TELEGRAM_BOT_TOKEN` and `AGENTGUARD_TELEGRAM_CHAT_ID`; secrets are never returned to the browser. Full steps are in [Installation](docs/INSTALLATION.md).
 
 ## Payment security workflow
 
@@ -78,7 +77,7 @@ python -m pip install -r requirements-foundation.txt
 .venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir tests -q
 ```
 
-The optional browser smoke test requires Playwright and Microsoft Edge. Install `requirements-browser.txt` before running the full suite to include it. Tests use disposable SQLite data and mocked NEAR RPC responses; they do not broadcast transactions. See [Test Instructions](docs/TESTING.md) for the focused browser-test command. Test results change as code changes; the current observed result is **60 passed, 1 warning**.
+The optional browser smoke test requires Playwright and Microsoft Edge. Install `requirements-browser.txt` before running the full suite to include it. Tests use disposable SQLite data and mocked NEAR RPC responses; they do not broadcast transactions. The latest complete run on this revision was **66 passed, 1 warning** (`19.05s`, exit 0); it required permission for Playwright's local subprocess. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
 
 ## Local demo
 
@@ -87,8 +86,9 @@ The optional browser smoke test requires Playwright and Microsoft Edge. Install 
 3. Submit a small request to `treasury.testnet` and observe the server decision and updated counts.
 4. Submit a request above the review threshold, then approve or reject it in Human Approval Center. The approval is revalidated and does not execute a payment.
 5. Submit a request to `attacker.testnet` to demonstrate the blocklist, or use Simulation Lab to run all 12 backend scenarios.
-6. Review the persisted audit events. The simulator records runs, underlying evaluation records and audit events in the configured database.
-7. Check the NEAR monitor separately. It reports current RPC results when available; mocked tests are not live-chain evidence.
+6. Review the persisted Recent Activity. Enter the admin token to access full audit data, verify the audit hash chain, or export JSON/CSV.
+7. Optionally enable the global kill switch; it blocks all new v4 evaluations until an authenticated operator disables it.
+8. Check the NEAR monitor separately. It reports current RPC results when available; mocked tests are not live-chain evidence. Telegram stays disabled unless both server environment settings are configured.
 
 See [Demo Walkthrough](docs/DEMO.md) for a fuller presentation sequence.
 
@@ -96,7 +96,7 @@ See [Demo Walkthrough](docs/DEMO.md) for a fuller presentation sequence.
 
 The NEAR client permits only read-only `status`, `query`, and `tx` status methods. It checks the RPC `chain_id` before account and transaction lookups. Account lookup uses finalized `view_account`; transaction lookup uses status at `FINAL`. The explorer URL is returned only after the RPC result’s hash and signer match the request. See the [NEAR RPC account documentation](https://docs.near.org/api/rpc/contracts) and [transaction status documentation](https://docs.near.org/api/rpc/transactions).
 
-There is no transaction signing, broadcasting, wallet connection, private-key handling, or automatic execution code in the v4 foundation app. An `APPROVE` is a policy decision only. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
+There is no transaction signing, broadcasting, wallet connection, private-key handling, or automatic execution code in the v4 foundation app. An `APPROVE` is a policy decision only. The older v2/v3 demos also label approval as policy-only and no longer manufacture chain balances or explorer receipts. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
 
 ## Screenshots
 

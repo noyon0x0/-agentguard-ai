@@ -41,6 +41,8 @@ This binds to loopback. Keep it that way for the demo. The v4 dashboard is at `h
 | `AGENTGUARD_ADMIN_TOKEN` | `agentguard-local-demo-token` | Bearer token for operator actions. Override it with a unique secret outside local demos. |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | HTTPS Testnet JSON-RPC URL; HTTP is accepted only for localhost. |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | Must be from 0.1 to 60 seconds. |
+| `AGENTGUARD_TELEGRAM_BOT_TOKEN` | unset | Optional server-only Telegram bot token. |
+| `AGENTGUARD_TELEGRAM_CHAT_ID` | unset | Optional destination chat; alerts remain disabled unless both Telegram settings are configured. |
 
 The settings endpoint never returns the RPC URL or admin token. The default token is for loopback demos only; set a unique secret before any shared deployment. Use a fresh shell and do not paste secrets into screenshots or source files.
 

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .models import AgentState, PolicyConfiguration, SecurityEvaluation
+from .models import AgentState, PolicyConfiguration, PolicyRevision, SecurityEvaluation
 from .schemas import EvaluationIntake
 
 PROMPT_ATTACK_PATTERNS = tuple(
@@ -43,6 +43,25 @@ def payload_fingerprint(payload: EvaluationIntake) -> str:
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
+def policy_snapshot(policy: PolicyConfiguration) -> dict:
+    return {
+        "version": policy.policy_version,
+        "max_transaction_near": policy.max_transaction_near,
+        "daily_limit_near": policy.daily_limit_near,
+        "review_threshold_near": policy.review_threshold_near,
+        "allowlist": policy.allowlist,
+        "blocklist": policy.blocklist,
+        "prompt_detection_enabled": policy.prompt_detection_enabled,
+        "velocity_enabled": policy.velocity_enabled,
+        "velocity_max_requests": policy.velocity_max_requests,
+        "velocity_window_seconds": policy.velocity_window_seconds,
+        "duplicate_window_seconds": policy.duplicate_window_seconds,
+        "allowed_tools": policy.allowed_tools,
+        "allowed_contracts": policy.allowed_contracts,
+        "global_kill_switch": policy.global_kill_switch,
+    }
+
+
 def ensure_default_policy(session: Session) -> None:
     if session.get(PolicyConfiguration, 1) is None:
         session.add(
@@ -66,6 +85,10 @@ def ensure_default_policy(session: Session) -> None:
         if session.get(AgentState, agent_id) is None:
             session.add(AgentState(agent_id=agent_id, frozen=False))
     session.commit()
+    policy = session.get(PolicyConfiguration, 1)
+    if session.scalar(select(PolicyRevision.id).where(PolicyRevision.version == policy.policy_version)) is None:
+        session.add(PolicyRevision(version=policy.policy_version, snapshot=policy_snapshot(policy)))
+        session.commit()
 
 
 def evaluate_policy(
@@ -85,6 +108,12 @@ def evaluate_policy(
     checks: dict[str, str] = {}
     reasons: list[str] = []
     block_reasons: list[str] = []
+
+    if policy.global_kill_switch:
+        checks["global_kill_switch"] = "ENABLED"
+        block_reasons.append("Global kill switch is enabled.")
+    else:
+        checks["global_kill_switch"] = "DISABLED"
 
     agent = session.get(AgentState, payload.agent_id)
     if agent is None:

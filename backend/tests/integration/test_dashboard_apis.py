@@ -30,6 +30,8 @@ def test_dashboard_read_apis_return_persisted_and_runtime_state():
         "evaluated_amount_near": 0.0,
         "last_evaluation_at": None,
         "execution_enabled": False,
+        "policy_version": 1,
+        "global_kill_switch": False,
     }
     assert any(agent["agent_id"] == "agent.testnet" for agent in agents)
     assert threats["source"] == "local_policy_engine"

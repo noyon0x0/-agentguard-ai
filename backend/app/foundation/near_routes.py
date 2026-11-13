@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import Request
 
 from .near_client import (
     NearAccountNotFound,
@@ -19,6 +20,7 @@ from .schemas import (
     NearHealthResponse,
     NearTransactionResponse,
 )
+from .telegram import send_telegram
 
 
 def create_near_router(client: NearTestnetClient) -> APIRouter:
@@ -28,12 +30,14 @@ def create_near_router(client: NearTestnetClient) -> APIRouter:
         return client
 
     @router.get("/health", response_model=NearHealthResponse)
-    def rpc_health(near: NearTestnetClient = Depends(get_client)) -> dict:
+    def rpc_health(request: Request, near: NearTestnetClient = Depends(get_client)) -> dict:
         try:
             return near.verify_network()
         except NearWrongNetwork as exc:
+            send_telegram(request.app.state.settings, "NEAR_RPC_FAILURE", "configured RPC is not connected to Testnet")
             raise HTTPException(status_code=503, detail={"code": "NEAR_WRONG_NETWORK"}) from exc
         except NearIntegrationError as exc:
+            send_telegram(request.app.state.settings, "NEAR_RPC_FAILURE", "Testnet RPC health check failed")
             raise HTTPException(status_code=503, detail={"code": "NEAR_RPC_UNAVAILABLE"}) from exc
 
     @router.get("/accounts/{account_id}", response_model=NearAccountResponse)

@@ -16,6 +16,7 @@ class EvaluationIntake(BaseModel):
     agent_id: str = Field(default="agent.testnet", min_length=2, max_length=64)
     recipient: str = Field(min_length=2, max_length=64)
     amount_near: float = Field(gt=0, le=10_000_000)
+    network: Literal["testnet"] = "testnet"
     prompt: str | None = Field(default=None, max_length=4000)
     memo: str | None = Field(default=None, max_length=512)
     tool_name: str | None = Field(default=None, max_length=64)
@@ -55,6 +56,9 @@ class EvaluationAccepted(BaseModel):
     decision: str
     status: str
     risk_score: int
+    network: Literal["testnet"] = "testnet"
+    policy_version: int = Field(ge=1)
+    request_timestamp: str
     explanation: str
     checks: dict[str, str]
     review_expires_at: str | None = None
@@ -76,6 +80,7 @@ class PolicyUpdate(BaseModel):
     duplicate_window_seconds: int = Field(ge=1, le=86400)
     allowed_tools: list[str] | None = Field(default=None, max_length=100)
     allowed_contracts: list[str] | None = Field(default=None, max_length=500)
+    policy_version: int | None = Field(default=None, ge=1)
 
     @field_validator("max_transaction_near", "daily_limit_near", "review_threshold_near")
     @classmethod
@@ -116,6 +121,11 @@ class AgentUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     frozen: bool
+
+
+class KillSwitchUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool
 
 
 class HumanDecision(BaseModel):

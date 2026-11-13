@@ -101,17 +101,24 @@ class NearTestnetClient:
         payload = {"jsonrpc": "2.0", "id": str(uuid.uuid4()), "method": method}
         if params is not None:
             payload["params"] = params
-        try:
-            response = requests.post(
-                self.rpc_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-                timeout=self.timeout_seconds,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except (requests.RequestException, ValueError):
-            raise NearRpcUnavailable("NEAR Testnet RPC request failed") from None
+        data = None
+        for attempt in range(2):
+            try:
+                response = requests.post(
+                    self.rpc_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=self.timeout_seconds,
+                )
+                response.raise_for_status()
+                data = response.json()
+                break
+            except (requests.RequestException, ValueError):
+                if attempt == 1:
+                    raise NearRpcUnavailable("NEAR Testnet RPC request failed") from None
+                time.sleep(0.1)
+        if data is None:
+            raise NearRpcUnavailable("NEAR Testnet RPC request failed")
         if not isinstance(data, dict) or data.get("jsonrpc") != "2.0":
             raise NearRpcUnavailable("NEAR Testnet RPC returned an invalid response")
         error = data.get("error")

@@ -21,13 +21,9 @@ python -m pytest -p no:cacheprovider -p no:tmpdir tests/browser/test_v4_dashboar
 
 The smoke test launches the combined FastAPI app against a temporary SQLite database and uses the installed Microsoft Edge executable in headless mode. It supplies a test-only admin token, stubs the dashboard's automatic NEAR health display request, checks the protected dashboard API calls, submits one approved and one blocked evaluation through the browser, checks the visible totals, and reads the temporary database in read-only mode. It does not alter the project database or send blockchain requests.
 
-## Last recorded result
+## Latest verification record
 
-```text
-60 passed, 1 warning in 29.91s
-```
-
-The warning was emitted by the installed Starlette `TestClient` integration because it currently relies on the installed `httpx` version. The run completed with exit status 0.
+Complete suite on 2026-11-13: `66 passed, 1 warning in 19.05s`, exit code 0, using the elevated local subprocess permission for Playwright. The single warning is Starlette's `TestClient`/`httpx` deprecation. A sandbox-only run had 65 passed and failed to launch Playwright's bundled Node process with Windows `WinError 5`; the browser test passed when rerun with subprocess permission. NEAR RPC tests use mocked provider replies and are not live network evidence.
 
 ## Coverage inventory
 
@@ -41,4 +37,4 @@ The warning was emitted by the installed Starlette `TestClient` integration beca
 
 ## Not covered by automated tests
 
-Automated tests do not sign or submit transactions; do not prove the soundness of regex injection detection; do not conduct load, penetration, or full assistive-technology testing; and do not establish the availability or correctness of third-party RPC providers. NEAR RPC integration tests are mocked. A separate live read-only Testnet `status` and finalized `view_account` request succeeded on 2026-11-12; this is a point-in-time observation. No live transaction lookup was performed.
+Automated tests do not sign or submit transactions; do not prove the soundness of regex injection detection; do not conduct load, penetration, or full assistive-technology testing; and do not establish the availability or correctness of third-party RPC providers. NEAR RPC integration tests are mocked. Live RPC availability must be verified separately; the configured proxy may prevent requests. No live transaction lookup is required or performed by the test suite.

@@ -7,6 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
+from .telegram import send_telegram
+
 
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
@@ -20,6 +22,9 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def unexpected_error_handler(request: Request, exc: Exception) -> JSONResponse:
         # Details belong in internal diagnostics, never in client responses.
+        settings = getattr(request.app.state, "settings", None)
+        if settings is not None:
+            send_telegram(settings, "BACKEND_FAILURE", f"request {getattr(request.state, 'request_id', 'unknown')} failed")
         return JSONResponse(
             status_code=500,
             content={"error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred"}},

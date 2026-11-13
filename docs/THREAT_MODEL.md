@@ -35,7 +35,7 @@ This model covers the v4 dashboard, FastAPI foundation, deterministic transactio
 | RPC spoofing or wrong network | HTTPS requirement for non-local RPC, `status` chain ID must be `testnet`, RPC errors/timeouts fail closed. | Trust still depends on configured provider; no independent proof/light-client verification. |
 | RPC error misrepresented as success | No fabricated balances; response/timeout errors return service errors. | Public RPC may rate-limit or be unavailable; no failover health consensus. |
 | Secret disclosure | No signing secrets accepted; config endpoint omits RPC URL and admin token; safe logs omit request bodies and exception messages. | Operators can still leak the shared admin token outside this app. |
-| Audit tampering/loss | SQLite persistence and per-decision events. | Audit log is not append-only at the database layer, hash-chained, signed, backed up, or tamper-proof. |
+| Audit tampering/loss | Persisted events link to previous SHA-256 hashes; an admin endpoint checks integrity. | SQLite is mutable; an operator can rewrite all hashes. There is no signature, external anchor, or automatic backup. |
 | Resource exhaustion | Request field bounds, RPC timeout, bounded audit page size. | No general rate limit, request-size policy, or load testing. |
 
 ## Security assumptions

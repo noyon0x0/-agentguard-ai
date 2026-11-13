@@ -15,8 +15,10 @@ Send `Authorization: Bearer <AGENTGUARD_ADMIN_TOKEN>` to operator-only routes. F
 | GET | `/v4/api/v1/agents` | No | Registered agent frozen state and persisted evaluation counts. |
 | GET | `/v4/api/v1/threats` | No | Local policy rules and recent persisted BLOCK records; no external feed. `limit` 1–100. |
 | GET | `/v4/api/v1/settings` | No | Safe runtime settings; secrets omitted. |
-| GET | `/v4/api/v1/telegram/status` | No | Reports Telegram as not configured. |
+| GET | `/v4/api/v1/telegram/status` | No | Reports whether optional server-side Telegram delivery is configured. |
 | GET | `/v4/api/v1/audit/summary` | No | Audit event count and latest timestamp. |
+| GET | `/v4/api/v1/activity?limit=20` | No | Sanitized recent persisted evaluations for the dashboard; no prompt or credential fields. |
+| GET | `/v4/api/v1/kill-switch` | No | Current global emergency-stop state and policy version. |
 
 ## Policy and evaluations
 
@@ -29,6 +31,12 @@ Send `Authorization: Bearer <AGENTGUARD_ADMIN_TOKEN>` to operator-only routes. F
 | GET | `/v4/api/v1/evaluations/pending` | Admin | List pending human reviews. |
 | POST | `/v4/api/v1/evaluations/{request_id}/decision` | Admin | Approve/reject a review, subject to expiry and current policy checks. |
 | GET | `/v4/api/v1/audit?limit=100` | Admin | Recent persisted audit events; limit 1–1000. |
+| GET | `/v4/api/v1/policy/history` | No | Persisted policy snapshots by version. |
+| PUT | `/v4/api/v1/kill-switch` | Admin | Enable/disable the global evaluation block. |
+| GET | `/v4/api/v1/audit/verify` | Admin | Verify linked SHA-256 audit event hashes. |
+| GET | `/v4/api/v1/audit/export?format=json|csv` | Admin | Export audit rows in JSON or CSV. |
+| GET | `/v4/api/v1/audit/incidents/{request_id}` | Admin | Get audit evidence for one request ID. |
+| POST | `/v4/api/v1/telegram/test` | Admin | Test configured Telegram delivery; returns conflict when disabled. |
 
 Example request:
 
@@ -60,6 +68,8 @@ The response contains `request_id`, `decision`, `risk_score`, `explanation`, `ch
 | GET | `/v4/api/v1/near/transactions/{tx_hash}?sender_account_id=...` | No | Read-only final transaction status; returns Testnet explorer URL only after hash/signer match. |
 
 Errors return structured codes such as `INVALID_NEAR_ACCOUNT_ID`, `NEAR_ACCOUNT_NOT_FOUND`, `NEAR_WRONG_NETWORK`, and `NEAR_RPC_UNAVAILABLE`. No transaction submission route exists.
+
+There is no `/v4/values` route. The dashboard uses `/v4/api/v1/overview` for metrics and `/v4/api/v1/activity` for recent activity.
 
 ## Security Simulation Lab
 

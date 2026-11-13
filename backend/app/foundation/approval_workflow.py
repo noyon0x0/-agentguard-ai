@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from .models import AuditEvent, SecurityEvaluation
+from .audit_chain import append_audit_event
+from .models import PolicyConfiguration, SecurityEvaluation
 from .schemas import EvaluationIntake
 from .security_engine import evaluate_policy
 
@@ -29,13 +30,11 @@ def resolve_human_decision(
         if expires_at <= now:
             record.status = "BLOCK"
             record.explanation = "Human approval window expired; the request was blocked."
-            db.add(
-                AuditEvent(
-                    request_id=record.request_id,
-                    event_type="HUMAN_APPROVAL_EXPIRED",
-                    decision="BLOCK",
-                    details={"expired_at": expires_at.isoformat()},
-                )
+            policy = db.get(PolicyConfiguration, 1)
+            append_audit_event(
+                db, request_id=record.request_id, event_type="HUMAN_APPROVAL_EXPIRED",
+                decision="BLOCK", details={"expired_at": expires_at.isoformat()},
+                agent_id=record.agent_id, policy_version=policy.policy_version if policy else record.policy_version,
             )
             db.commit()
             db.refresh(record)
@@ -70,13 +69,11 @@ def resolve_human_decision(
     else:
         raise ValueError("action must be APPROVE or REJECT")
 
-    db.add(
-        AuditEvent(
-            request_id=record.request_id,
-            event_type=event_type,
-            decision=record.status,
-            details={"operator": "authenticated_admin"},
-        )
+    policy = db.get(PolicyConfiguration, 1)
+    append_audit_event(
+        db, request_id=record.request_id, event_type=event_type, decision=record.status,
+        details={"operator": "authenticated_admin"}, agent_id=record.agent_id,
+        policy_version=policy.policy_version if policy else record.policy_version,
     )
     db.commit()
     db.refresh(record)

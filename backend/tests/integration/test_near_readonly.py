@@ -128,7 +128,7 @@ def test_query_rpc_unavailability_is_reported_without_leaking_provider_error(mon
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "NEAR_RPC_UNAVAILABLE"
     assert "private upstream diagnostics" not in response.text
-    assert calls == ["status", "query"]
+    assert calls == ["status", "query", "query"]
 
 
 def test_invalid_account_ids_are_rejected_without_rpc_call(monkeypatch):

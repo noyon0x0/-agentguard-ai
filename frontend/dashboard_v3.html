@@ -80,14 +80,14 @@
     <div class="mi-card topbar">
       <div class="brand"><div class="brand-icon">🛡️</div><div><h1>AgentGuard AI <span class="pill-v3">v3.0 ULTIMATE</span></h1><p>HyperOS Security Control Center • NEAR Web3 & AI Firewall</p></div></div>
       <div class="top-controls">
-        <div class="wallet-box"><span>🔗</span><input id="walletInput" type="text" value="founder.testnet" /><button class="mi-pill-btn btn-connect" onclick="connectWallet()">Connect NEAR</button></div>
+        <div class="wallet-box"><span>🔗</span><input id="walletInput" type="text" value="founder.testnet" /><button class="mi-pill-btn btn-connect" onclick="connectWallet()">Verify Testnet account</button></div>
         <button id="soundBtn" class="mi-pill-btn" onclick="toggleSound()">🔊 Sound: ON</button>
         <button class="mi-pill-btn" onclick="exportReport()">📥 Export JSON</button>
       </div>
     </div>
     <div class="kpi-grid">
-      <div class="kpi-tile"><div class="kpi-top"><span>INTERCEPTED</span><div class="kpi-icon" style="background:rgba(56,189,248,0.18)">📡</div></div><div id="kpiTotal" class="kpi-num">0</div><div id="walletBalLabel" class="kpi-foot">Connected: founder.testnet</div></div>
-      <div class="kpi-tile"><div class="kpi-top"><span>APPROVED SAFE</span><div class="kpi-icon" style="background:rgba(16,185,129,0.18)">✅</div></div><div id="kpiAppVol" class="kpi-num" style="color:var(--green)">0 NEAR</div><div id="kpiAppCnt" class="kpi-foot">0 verified on-chain</div></div>
+      <div class="kpi-tile"><div class="kpi-top"><span>INTERCEPTED</span><div class="kpi-icon" style="background:rgba(56,189,248,0.18)">📡</div></div><div id="kpiTotal" class="kpi-num">0</div><div id="walletBalLabel" class="kpi-foot">No Testnet account verified</div></div>
+      <div class="kpi-tile"><div class="kpi-top"><span>APPROVED SAFE</span><div class="kpi-icon" style="background:rgba(16,185,129,0.18)">✅</div></div><div id="kpiAppVol" class="kpi-num" style="color:var(--green)">0 NEAR</div><div id="kpiAppCnt" class="kpi-foot">0 policy approvals only</div></div>
       <div class="kpi-tile"><div class="kpi-top"><span>THREATS BLOCKED</span><div class="kpi-icon" style="background:rgba(244,63,94,0.18)">🚨</div></div><div id="kpiBlkVol" class="kpi-num" style="color:var(--red)">0 NEAR</div><div id="kpiBlkCnt" class="kpi-foot">0 attacks stopped</div></div>
       <div class="kpi-tile"><div class="kpi-top"><span>HUMAN QUEUE</span><div class="kpi-icon" style="background:rgba(245,158,11,0.18)">⏳</div></div><div id="kpiPend" class="kpi-num" style="color:var(--amber)">0</div><div class="kpi-foot">Awaiting sign-off</div></div>
     </div>
@@ -104,7 +104,7 @@
         <div class="fld"><label>AI Agent Identity</label><select id="agentSel"><option value="DeFi-Trader-Bot">DeFi-Trader-Bot (Trust: HIGH)</option><option value="Auto-Payroll-Agent">Auto-Payroll-Agent (Trust: HIGH)</option><option value="Marketing-Grant-Bot">Marketing-Grant-Bot (Trust: MEDIUM)</option><option value="External-Plugin-Agent">External-Plugin-Agent (Trust: LOW)</option></select></div>
         <div class="fld-row fld"><div><label>Recipient Wallet</label><input id="recInput" type="text" value="treasury.testnet" class="mono" /></div><div><label>Amount (NEAR)</label><input id="amtInput" type="number" step="0.5" value="2.5" class="mono" /></div></div>
         <div class="fld"><label>AI Prompt Instruction</label><textarea id="prmInput" rows="2">Execute scheduled yield transfer to treasury.testnet</textarea></div>
-        <button class="btn-scan" onclick="runScan()">🔍 Scan & Execute Guardrail Check</button>
+        <button class="btn-scan" onclick="runScan()">🔍 Evaluate Request (No Execution)</button>
       </div>
       <div id="secRadar" class="mi-card">
         <div class="sec-head">🛰️ Live Threat Radar & Pipeline</div>
@@ -116,7 +116,7 @@
         <div id="p1" class="pipe-item"><span>1. Semantic AI Intent Judge</span><strong class="mono">IDLE</strong></div>
         <div id="p2" class="pipe-item"><span>2. Velocity Anomaly Guard</span><strong class="mono">IDLE</strong></div>
         <div id="p3" class="pipe-item"><span>3. NEAR RPC & List Check</span><strong class="mono">IDLE</strong></div>
-        <div id="p4" class="pipe-item"><span>4. On-Chain Audit Seal</span><strong class="mono">IDLE</strong></div>
+        <div id="p4" class="pipe-item"><span>4. Transaction execution (disabled)</span><strong class="mono">IDLE</strong></div>
         <div id="verdictTxt" style="background:rgba(9,14,26,0.85);padding:11px;border-radius:14px;font-size:12px;color:#cbd5e1;margin-top:8px">Ready. Click any scenario tile and run the firewall check!</div>
       </div>
       <div id="secPolicy" class="mi-card">
@@ -153,7 +153,7 @@
       <div class="sec-head">📜 Tamper-Proof Cryptographic Audit Ledger (SHA-256 & NEAR Explorer)</div>
       <div style="overflow-x:auto;margin-top:10px">
         <table>
-          <thead><tr><th>Time / ID</th><th>Agent</th><th>Recipient & Amount</th><th>Risk</th><th>Decision</th><th>On-Chain / SHA-256 Proof</th></tr></thead>
+          <thead><tr><th>Time / ID</th><th>Agent</th><th>Recipient & Amount</th><th>Risk</th><th>Decision</th><th>Local audit digest / execution state</th></tr></thead>
           <tbody id="logBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px">No transactions yet. Run a test above!</td></tr></tbody>
         </table>
       </div>
@@ -164,6 +164,10 @@
     const API = 'http://127.0.0.1:8000';
     let soundOn = true;
     let cachedState = null;
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (character) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[character]));
+    }
 
     function playTone(type) {
       if (!soundOn) return;
@@ -187,36 +191,37 @@
 
     function setPipe(id, st) {
       const el = document.getElementById(id); el.querySelector('strong').innerText = st; el.className = 'pipe-item ';
-      if (st === 'PASS' || st === 'ONCHAIN_SIGNED' || st === 'HUMAN_SIGNED') el.classList.add('st-pass');
+      if (st === 'PASS') el.classList.add('st-pass');
       else if (st === 'FAIL' || st === 'REJECTED' || st === 'FROZEN' || st === 'BLOCKED' || st === 'HUMAN_REJECTED') el.classList.add('st-fail');
       else el.classList.add('st-warn');
     }
 
     async function connectWallet() {
       const w = document.getElementById('walletInput').value.trim();
-      const res = await fetch(API + '/api/wallet/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet_id: w }) });
-      const d = await res.json();
-      document.getElementById('walletBalLabel').innerText = 'Connected: ' + d.wallet + ' (' + d.rpc.balance_near + ' NEAR)';
-      alert('✅ Connected to NEAR Testnet Wallet: ' + d.wallet + '\nLive RPC Balance: ' + d.rpc.balance_near + ' NEAR');
+      const label = document.getElementById('walletBalLabel'); label.textContent = 'Checking Testnet account?';
+      try {
+        const res = await fetch(API + '/api/wallet/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet_id: w }) });
+        const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`);
+        label.textContent = d.status === 'account_verified' ? `Verified Testnet account: ${d.wallet} (${d.rpc.balance_near} NEAR)` : `Testnet account not verified: ${d.rpc.status || d.status}`;
+      } catch (error) { label.textContent = `Testnet account check failed: ${error.message}`; }
     }
 
     async function runScan() {
       const payload = { agent_id: document.getElementById('agentSel').value, recipient: document.getElementById('recInput').value.trim(), amount_near: parseFloat(document.getElementById('amtInput').value), prompt: document.getElementById('prmInput').value.trim() };
       try {
         const res = await fetch(API + '/api/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const d = await res.json(); showDecision(d); await syncState();
-      } catch (e) { alert('Backend offline! Make sure uvicorn app.main_v3:app is running.'); }
+        const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`); showDecision(d); await syncState();
+      } catch (e) { document.getElementById('verdictTxt').textContent = `Backend request failed: ${e.message}`; }
     }
 
     function showDecision(d) {
       const ring = document.getElementById('radarRing'), emo = document.getElementById('radarEmoji'), rv = document.getElementById('riskVal'), pill = document.getElementById('decPill');
-      rv.innerHTML = d.risk_score + '<span style="font-size:14px;color:var(--muted)">/100</span>'; ring.className = 'radar ';
+      rv.textContent = `${Number(d.risk_score) || 0}/100`; ring.className = 'radar ';
       if (d.decision === 'APPROVE') { playTone('safe'); ring.classList.add('glow-ok'); emo.innerText = '✅'; rv.style.color = 'var(--green)'; pill.style.background = 'rgba(16,185,129,0.2)'; pill.style.color = '#6ee7b7'; pill.innerText = 'APPROVED'; }
       else if (d.decision === 'BLOCK') { playTone('block'); ring.classList.add('glow-no'); emo.innerText = '🚨'; rv.style.color = 'var(--red)'; pill.style.background = 'rgba(244,63,94,0.2)'; pill.style.color = '#fda4af'; pill.innerText = 'BLOCKED'; }
       else { ring.classList.add('glow-wait'); emo.innerText = '⏳'; rv.style.color = 'var(--amber)'; pill.style.background = 'rgba(245,158,11,0.2)'; pill.style.color = '#fcd34d'; pill.innerText = 'HUMAN SIGN-OFF'; }
       setPipe('p1', d.pipeline.semantic_ai); setPipe('p2', d.pipeline.velocity_guard); setPipe('p3', d.pipeline.dry_run_rpc); setPipe('p4', d.pipeline.crypto_seal);
-      const linkHtml = d.explorer_hash ? '<br><a href="https://nearblocks.io' + d.explorer_hash + '" target="_blank" style="color:var(--cyan);font-weight:700">🔗 View NEAR Testnet Explorer Receipt ↗</a>' : '';
-      document.getElementById('verdictTxt').innerHTML = '<strong>Verdict:</strong> ' + d.explanation + linkHtml;
+      const verdict = document.getElementById('verdictTxt'); verdict.replaceChildren(document.createElement('strong'), document.createTextNode(` ${d.explanation || ''}`)); verdict.firstChild.textContent = 'Verdict:';
     }
 
     async function savePolicy() {
@@ -239,7 +244,7 @@
 
     async function hitlAction(tx_id, action) {
       const res = await fetch(API + '/api/hitl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tx_id: tx_id, action: action }) });
-      const d = await res.json(); showDecision(d); await syncState();
+      const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`); showDecision(d); await syncState();
     }
     async function syncState() {
       try {
@@ -249,23 +254,23 @@
 
         document.getElementById('kpiTotal').innerText = st.stats.total;
         document.getElementById('kpiAppVol').innerText = st.stats.approved_vol + ' NEAR';
-        document.getElementById('kpiAppCnt').innerText = st.stats.approved_count + ' verified on-chain';
+        document.getElementById('kpiAppCnt').innerText = st.stats.approved_count + ' policy approvals only';
         document.getElementById('kpiBlkVol').innerText = st.stats.blocked_vol + ' NEAR';
         document.getElementById('kpiBlkCnt').innerText = st.stats.blocked_count + ' attacks stopped';
         document.getElementById('kpiPend').innerText = st.stats.pending_count;
 
         document.getElementById('agentList').innerHTML = Object.entries(st.agents).map(([name, info]) =>
-          '<div class="agent-row"><div><strong style="font-size:13px">' + name + '</strong> <span style="font-size:11px;color:var(--muted)">(' + info.trust + ')</span><div style="font-size:11px;color:var(--muted)">' + info.role + '</div></div><button class="btn-freeze" style="background:' + (info.frozen ? 'var(--red)' : 'rgba(16,185,129,0.2)') + ';color:' + (info.frozen ? '#fff' : '#6ee7b7') + '" onclick="toggleFreeze(\'' + name + '\', ' + (!info.frozen) + ')">' + (info.frozen ? '❄️ FROZEN (Unfreeze)' : '🟢 ACTIVE (Freeze)') + '</button></div>'
+          '<div class="agent-row"><div><strong style="font-size:13px">' + escapeHtml(name) + '</strong> <span style="font-size:11px;color:var(--muted)">(' + escapeHtml(info.trust) + ')</span><div style="font-size:11px;color:var(--muted)">' + escapeHtml(info.role) + '</div></div><button class="btn-freeze" style="background:' + (info.frozen ? 'var(--red)' : 'rgba(16,185,129,0.2)') + ';color:' + (info.frozen ? '#fff' : '#6ee7b7') + '" onclick="toggleFreeze(\'' + name + '\', ' + (!info.frozen) + ')">' + (info.frozen ? '❄️ FROZEN (Unfreeze)' : '🟢 ACTIVE (Freeze)') + '</button></div>'
         ).join('');
 
         document.getElementById('walletTags').innerHTML =
-          st.policy.whitelisted_wallets.map(w => '<span class="tag-chip">✅ ' + w + '</span>').join('') +
-          st.policy.blacklisted_wallets.map(w => '<span class="tag-chip tag-bad">☠️ ' + w + '</span>').join('');
+          st.policy.whitelisted_wallets.map(w => '<span class="tag-chip">✅ ' + escapeHtml(w) + '</span>').join('') +
+          st.policy.blacklisted_wallets.map(w => '<span class="tag-chip tag-bad">☠️ ' + escapeHtml(w) + '</span>').join('');
 
         const tgBox = document.getElementById('tgFeedBox');
         if (st.telegram_feed.length > 0) {
           tgBox.innerHTML = st.telegram_feed.map(m =>
-            '<div class="tg-item" style="border-color:' + (m.severity === 'CRITICAL' ? 'var(--red)' : 'var(--amber)') + '"><div style="display:flex;justify-content:space-between"><strong>' + m.title + '</strong><span class="mono" style="font-size:10px;color:var(--muted)">' + m.time + '</span></div><div style="color:#cbd5e1;margin-top:2px">' + m.message + '</div></div>'
+            '<div class="tg-item" style="border-color:' + (m.severity === 'CRITICAL' ? 'var(--red)' : 'var(--amber)') + '"><div style="display:flex;justify-content:space-between"><strong>' + escapeHtml(m.title) + '</strong><span class="mono" style="font-size:10px;color:var(--muted)">' + escapeHtml(m.time) + '</span></div><div style="color:#cbd5e1;margin-top:2px">' + escapeHtml(m.message) + '</div></div>'
           ).join('');
         }
 
@@ -273,7 +278,7 @@
         if (st.pending_queue.length > 0) {
           hCard.style.display = 'block';
           hBox.innerHTML = st.pending_queue.map(x =>
-            '<div class="agent-row" style="border:1px solid var(--amber);margin-top:8px"><div><strong class="mono" style="color:var(--amber)">' + x.tx_id + '</strong> • <strong>' + x.agent_id + '</strong> → <strong>' + x.amount_near + ' NEAR</strong> to <span class="mono" style="color:var(--cyan)">' + x.recipient + '</span></div><div style="display:flex;gap:8px"><button class="mi-pill-btn" style="background:var(--green);color:#000" onclick="hitlAction(\'' + x.tx_id + '\',\'APPROVE\')">✅ Approve</button><button class="mi-pill-btn" style="background:var(--red)" onclick="hitlAction(\'' + x.tx_id + '\',\'REJECT\')">❌ Reject</button></div></div>'
+            '<div class="agent-row" style="border:1px solid var(--amber);margin-top:8px"><div><strong class="mono" style="color:var(--amber)">' + escapeHtml(x.tx_id) + '</strong> • <strong>' + escapeHtml(x.agent_id) + '</strong> → <strong>' + escapeHtml(x.amount_near) + ' NEAR</strong> to <span class="mono" style="color:var(--cyan)">' + escapeHtml(x.recipient) + '</span></div><div style="display:flex;gap:8px"><button class="mi-pill-btn" style="background:var(--green);color:#000" onclick="hitlAction(\'' + escapeHtml(x.tx_id) + '\',\'APPROVE\')">✅ Approve</button><button class="mi-pill-btn" style="background:var(--red)" onclick="hitlAction(\'' + escapeHtml(x.tx_id) + '\',\'REJECT\')">❌ Reject</button></div></div>'
           ).join('');
         } else {
           hCard.style.display = 'none';
@@ -285,8 +290,8 @@
             const badge = l.decision === 'APPROVE'
               ? '<span style="background:rgba(16,185,129,0.2);color:#6ee7b7;padding:3px 9px;border-radius:99px;font-weight:700">APPROVE</span>'
               : '<span style="background:rgba(244,63,94,0.2);color:#fda4af;padding:3px 9px;border-radius:99px;font-weight:700">BLOCK</span>';
-            const expLink = l.explorer_hash ? '<br><a href="https://nearblocks.io' + l.explorer_hash + '" target="_blank" style="color:var(--cyan);font-size:10px">NEAR Tx ↗</a>' : '';
-            return '<tr><td class="mono">' + l.timestamp + '<br><span style="color:var(--muted);font-size:10px">' + l.tx_id + '</span></td><td><strong>' + l.agent_id + '</strong></td><td class="mono" style="color:var(--cyan)">' + l.recipient + '<br><strong style="color:#fff">' + l.amount_near + ' NEAR</strong></td><td style="font-weight:800;color:' + (l.risk_score >= 70 ? 'var(--red)' : 'var(--green)') + '">' + l.risk_score + '/100</td><td>' + badge + '</td><td class="mono" style="font-size:11px;color:var(--muted)">' + l.audit_hash.slice(0, 16) + '...' + expLink + '</td></tr>';
+            const expLink = '<br><span>Execution disabled; no chain receipt</span>';
+            return '<tr><td class="mono">' + escapeHtml(l.timestamp) + '<br><span style="color:var(--muted);font-size:10px">' + escapeHtml(l.tx_id) + '</span></td><td><strong>' + escapeHtml(l.agent_id) + '</strong></td><td class="mono" style="color:var(--cyan)">' + escapeHtml(l.recipient) + '<br><strong style="color:#fff">' + escapeHtml(l.amount_near) + ' NEAR</strong></td><td style="font-weight:800;color:' + (l.risk_score >= 70 ? 'var(--red)' : 'var(--green)') + '">' + escapeHtml(l.risk_score) + '/100</td><td>' + badge + '</td><td class="mono" style="font-size:11px;color:var(--muted)">' + escapeHtml(String(l.audit_hash || '').slice(0, 16)) + '...' + expLink + '</td></tr>';
           }).join('');
         }
       } catch (e) {}

@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from .foundation.main import app as v4_api_app
+from .foundation.near_client import NearAccountNotFound, NearIntegrationError, validate_account_id
+from .foundation.telegram import send_telegram
 
 @asynccontextmanager
 async def app_lifespan(_app: FastAPI):
@@ -40,8 +42,6 @@ POLICY_STATE = {
     "strict_whitelist_mode": True,
     "velocity_guard_enabled": True,
     "telegram_alerts_enabled": True,
-    "telegram_bot_token": "",
-    "telegram_chat_id": "",
     "connected_wallet": "founder.testnet",
     "whitelisted_wallets": [
         "treasury.testnet",
@@ -92,8 +92,6 @@ class PolicyUpdate(BaseModel):
     strict_whitelist_mode: bool
     velocity_guard_enabled: bool
     telegram_alerts_enabled: bool
-    telegram_bot_token: Optional[str] = ""
-    telegram_chat_id: Optional[str] = ""
 
 class WalletListAction(BaseModel):
     list_type: str
@@ -116,19 +114,13 @@ def sha256_hash(payload: dict) -> str:
 
 def check_near_rpc(account_id: str) -> dict:
     try:
-        data = json.dumps({
-            "jsonrpc": "2.0", "id": "ag3", "method": "query",
-            "params": {"request_type": "view_account", "finality": "final", "account_id": account_id},
-        }).encode("utf-8")
-        req = urllib.request.Request("https://near.org", data=data, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=2.5) as resp:
-            res = json.loads(resp.read().decode("utf-8"))
-            if "result" in res:
-                bal = round(int(res["result"].get("amount", 0)) / 1e24, 3)
-                return {"exists": True, "balance_near": bal}
-            return {"exists": False, "balance_near": 0.0}
-    except Exception:
-        return {"exists": True, "balance_near": 64.50}
+        account_id = validate_account_id(account_id)
+        account = v4_api_app.state.near_client.get_account(account_id)
+        return {"exists": True, "verified": True, "balance_near": account["balance_near"], "network": "testnet"}
+    except NearAccountNotFound:
+        return {"exists": False, "verified": True, "balance_near": None, "network": "testnet"}
+    except NearIntegrationError:
+        return {"exists": None, "verified": False, "balance_near": None, "network": "unavailable", "status": "rpc_unavailable"}
 
 def send_telegram_alert(title: str, message: str, severity: str):
     if not POLICY_STATE["telegram_alerts_enabled"]:
@@ -141,16 +133,9 @@ def send_telegram_alert(title: str, message: str, severity: str):
     })
     if len(TELEGRAM_FEED) > 15:
         TELEGRAM_FEED.pop()
-    token = POLICY_STATE.get("telegram_bot_token", "").strip()
-    chat_id = POLICY_STATE.get("telegram_chat_id", "").strip()
-    if token and chat_id:
-        try:
-            url = f"https://telegram.org{token}/sendMessage"
-            body = json.dumps({"chat_id": chat_id, "text": f"🛡️ AgentGuard AI\n{title}\n{message}"}).encode("utf-8")
-            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-            urllib.request.urlopen(req, timeout=2)
-        except Exception:
-            pass
+    delivery = send_telegram(v4_api_app.state.settings, title, message)
+    TELEGRAM_FEED[0]["delivery_status"] = delivery["status"]
+
 @app.get("/api/state")
 def get_state():
     approved = [x for x in AUDIT_LOGS if x["decision"] == "APPROVE"]
@@ -164,7 +149,7 @@ def get_state():
             "approved_vol": round(sum(x["amount_near"] for x in approved), 2),
             "blocked_vol": round(sum(x["amount_near"] for x in blocked), 2),
         },
-        "policy": POLICY_STATE,
+        "policy": {key: value for key, value in POLICY_STATE.items() if "token" not in key.casefold() and "secret" not in key.casefold()},
         "agents": AGENTS_DB,
         "pending_queue": list(PENDING_QUEUE.values()),
         "audit_logs": list(reversed(AUDIT_LOGS[-30:])),
@@ -173,10 +158,11 @@ def get_state():
 
 @app.post("/api/wallet/connect")
 def connect_wallet(req: WalletConnectReq):
-    w = req.wallet_id.strip().lower() or "founder.testnet"
-    POLICY_STATE["connected_wallet"] = w
+    w = req.wallet_id.strip().lower()
     rpc = check_near_rpc(w)
-    return {"wallet": w, "rpc": rpc}
+    if rpc.get("verified") and rpc.get("exists"):
+        POLICY_STATE["connected_wallet"] = w
+    return {"wallet": w, "rpc": rpc, "status": "account_verified" if rpc.get("verified") and rpc.get("exists") else "verification_unavailable" if not rpc.get("verified") else "account_not_found"}
 
 @app.post("/api/policy")
 def update_policy(p: PolicyUpdate):
@@ -186,11 +172,7 @@ def update_policy(p: PolicyUpdate):
     POLICY_STATE["strict_whitelist_mode"] = p.strict_whitelist_mode
     POLICY_STATE["velocity_guard_enabled"] = p.velocity_guard_enabled
     POLICY_STATE["telegram_alerts_enabled"] = p.telegram_alerts_enabled
-    if p.telegram_bot_token is not None:
-        POLICY_STATE["telegram_bot_token"] = p.telegram_bot_token
-    if p.telegram_chat_id is not None:
-        POLICY_STATE["telegram_chat_id"] = p.telegram_chat_id
-    return {"status": "ok", "policy": POLICY_STATE}
+    return {"status": "ok", "policy": {key: value for key, value in POLICY_STATE.items() if "token" not in key.casefold() and "secret" not in key.casefold()}}
 
 @app.post("/api/wallets")
 def manage_wallets(item: WalletListAction):
@@ -279,10 +261,10 @@ def evaluate_tx(tx: TransactionRequest):
         send_telegram_alert("⏳ Operator Review Needed", f"{tx.agent_id} requested {tx.amount_near} NEAR to {recipient}.", "WARN")
     else:
         decision = "APPROVE"
-        pipeline["crypto_seal"] = "ONCHAIN_SIGNED"
+        pipeline["crypto_seal"] = "EXECUTION_DISABLED"
         agent["daily_spent"] = round(agent["daily_spent"] + tx.amount_near, 2)
-        explanation = "All AI Semantic, Velocity & Smart Contract Dry-Run checks passed."
-        explorer_hash = hashlib.sha256(f"{tx_id}-{now_ts}".encode()).hexdigest()[:44]
+        explanation = "Policy checks passed. No transaction was signed or submitted."
+        explorer_hash = None
 
     record = {
         "tx_id": tx_id,
@@ -314,9 +296,9 @@ def resolve_hitl(item: ApprovalAction):
     rec = PENDING_QUEUE.pop(item.tx_id)
     if item.action == "APPROVE":
         rec["decision"] = "APPROVE"
-        rec["pipeline"]["crypto_seal"] = "HUMAN_SIGNED"
-        rec["explanation"] = "Approved via Human-in-the-Loop Operator Console."
-        rec["explorer_hash"] = hashlib.sha256(f"{item.tx_id}-ok".encode()).hexdigest()[:44]
+        rec["pipeline"]["crypto_seal"] = "HUMAN_APPROVED_POLICY_ONLY"
+        rec["explanation"] = "Human reviewer approved the policy request; no transaction was signed or submitted."
+        rec["explorer_hash"] = None
     else:
         rec["decision"] = "BLOCK"
         rec["pipeline"]["crypto_seal"] = "HUMAN_REJECTED"

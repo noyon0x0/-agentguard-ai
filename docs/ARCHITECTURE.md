@@ -50,6 +50,8 @@ The client validates account/hash input, calls `status` and requires `chain_id =
 
 The default database URL is SQLite. Startup creates tables and runs additive compatibility migrations. There is no migration history/version table yet. Evaluation and policy operations are serialized with a process-local lock; this does not provide distributed coordination across multiple server processes. Use a single process for the demo.
 
+Policy and kill-switch changes save version snapshots. Requests receive an `X-Request-ID`; sanitized recent activity is public while full audit views and exports require admin authorization. The global kill switch is enforced by the backend policy engine. Audit hashes detect edits to the stored sequence but are not immutable: a database operator can rewrite records and hashes together. Legacy events receive a deterministic chain during migration. Optional Telegram delivery is configured only through server environment variables; no delivery is implied when disabled.
+
 The audit table supports investigation but is not cryptographically chained or immutable. Hash-like values are not used to claim tamper-proof storage.
 
 ## Deployment shape

@@ -89,7 +89,7 @@
     .agent-light{grid-row:1/3;width:6px;height:6px;border-radius:50%;background:#50d4a0;box-shadow:0 0 10px rgba(80,212,160,.55)}.network-node.frozen .agent-light{background:#ff7184;box-shadow:0 0 10px rgba(255,113,132,.5)}
     .agent-name{overflow:hidden;color:#c4d2de;font-size:9px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.agent-meta{color:#73889b;font-size:8px;white-space:nowrap}
     .network-footer{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:9px;padding-top:11px;border-top:1px solid rgba(127,164,190,.1)}.network-stat{min-width:0}.network-stat .metric-label{display:block;margin-bottom:4px}.network-stat .state{margin:0;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.network-stat .callout{padding:5px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .activity-panel{padding:17px 17px 12px}.activity-head{padding-bottom:11px;border-bottom:1px solid rgba(127,164,190,.1)}.activity-head p{margin:3px 0 0;color:#72889c;font-size:9px}.activity-feed{position:relative;display:grid;align-content:start;max-height:238px;overflow:auto;padding:4px 2px 2px 0}.activity-feed:empty::before{content:"Authenticate to view persisted events";padding:15px 0;color:#71869a;font-size:10px}.activity-item{position:relative;display:grid;grid-template-columns:11px minmax(0,1fr);gap:9px;padding:9px 0;border-bottom:1px solid rgba(127,164,190,.08)}.activity-item:last-child{border-bottom:0}.activity-rail{position:relative;display:flex;justify-content:center}.activity-rail::after{content:"";position:absolute;top:9px;bottom:-10px;width:1px;background:rgba(128,162,186,.16)}.activity-item:last-child .activity-rail::after{display:none}.activity-dot{z-index:1;width:7px;height:7px;margin-top:4px;border-radius:50%;background:#e1bb6d;box-shadow:0 0 9px rgba(225,187,109,.26)}.activity-item.approve .activity-dot{background:#56d5a2;box-shadow:0 0 9px rgba(86,213,162,.32)}.activity-item.block .activity-dot{background:#ff7184;box-shadow:0 0 9px rgba(255,113,132,.28)}.activity-title{display:flex;justify-content:space-between;gap:8px;color:#bdcbd7;font-size:9px;font-weight:600}.activity-title time{flex:none;color:#71869a;font-size:8px;font-weight:450}.activity-detail{margin-top:3px;color:#73899d;font-size:8px;overflow-wrap:anywhere}
+    .activity-panel{padding:17px 17px 12px}.activity-head{padding-bottom:11px;border-bottom:1px solid rgba(127,164,190,.1)}.activity-head p{margin:3px 0 0;color:#72889c;font-size:9px}.activity-feed{position:relative;display:grid;align-content:start;max-height:238px;overflow:auto;padding:4px 2px 2px 0}.activity-feed:empty::before{content:"No persisted activity yet";padding:15px 0;color:#71869a;font-size:10px}.activity-item{position:relative;display:grid;grid-template-columns:11px minmax(0,1fr);gap:9px;padding:9px 0;border-bottom:1px solid rgba(127,164,190,.08)}.activity-item:last-child{border-bottom:0}.activity-rail{position:relative;display:flex;justify-content:center}.activity-rail::after{content:"";position:absolute;top:9px;bottom:-10px;width:1px;background:rgba(128,162,186,.16)}.activity-item:last-child .activity-rail::after{display:none}.activity-dot{z-index:1;width:7px;height:7px;margin-top:4px;border-radius:50%;background:#e1bb6d;box-shadow:0 0 9px rgba(225,187,109,.26)}.activity-item.approve .activity-dot{background:#56d5a2;box-shadow:0 0 9px rgba(86,213,162,.32)}.activity-item.block .activity-dot{background:#ff7184;box-shadow:0 0 9px rgba(255,113,132,.28)}.activity-title{display:flex;justify-content:space-between;gap:8px;color:#bdcbd7;font-size:9px;font-weight:600}.activity-title time{flex:none;color:#71869a;font-size:8px;font-weight:450}.activity-detail{margin-top:3px;color:#73899d;font-size:8px;overflow-wrap:anywhere}
     .agents-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:26px}.agents-list .row{min-width:0}.agents-list .row-main{overflow:hidden}.agents-list .actions{flex-wrap:nowrap}.agents-list .btn{min-height:29px;padding:6px 9px}
     #threat-blocks .row{align-items:flex-start}.table-wrap{border:1px solid rgba(127,164,190,.1);border-radius:9px}table{min-width:680px}
     @media(min-width:1500px){.shell{padding:28px 34px;grid-template-columns:244px minmax(0,1fr);gap:27px}.topbar{margin-bottom:22px}.kpis .card{min-height:122px;padding:18px 21px}.metric{font-size:32px}.network-map{min-height:240px}.network-card,.activity-panel{padding:20px 22px}}
@@ -195,6 +195,8 @@
               <div class="field"><label for="sender-id">Sender account</label><input id="sender-id" value="agent.testnet" required maxlength="64"></div>
               <div class="field"><label for="recipient-id">Recipient account</label><input id="recipient-id" value="treasury.testnet" required maxlength="64"></div>
               <div class="field"><label for="amount-near">Amount (NEAR)</label><input id="amount-near" type="number" min="0.00000001" step="any" value="2.5" required></div>
+              <div class="field"><label for="contract-account">Contract account (optional)</label><input id="contract-account" maxlength="64" placeholder="contract.testnet"></div>
+              <div class="field"><label for="evaluation-network">Evaluation network</label><input id="evaluation-network" value="NEAR Testnet" readonly aria-readonly="true"></div>
               <div class="field full"><label for="prompt-text">Agent prompt</label><textarea id="prompt-text" maxlength="4000">Execute scheduled treasury payment.</textarea></div>
               <div class="field full"><label for="memo-text">Memo</label><input id="memo-text" maxlength="512"></div>
               <div class="field full"><button class="btn btn-primary" type="submit">Evaluate request</button><div id="evaluation-result" class="state empty" role="status" aria-live="polite">No evaluation submitted.</div></div>
@@ -230,17 +232,17 @@
 
       <section class="section" id="audit" aria-labelledby="audit-title">
         <h2 class="page-title" id="audit-title">Audit &amp; Forensics</h2>
-        <article class="card"><div class="inline" style="justify-content:space-between"><p class="sub">Recent persisted audit events. Full access requires admin authentication.</p><button id="export-audit" class="btn" type="button">Export loaded audit data</button></div><div id="audit-state" class="state loading">Loading audit records…</div><div class="table-wrap"><table><caption>Recent audit events returned by the backend</caption><thead><tr><th>Time</th><th>Request ID</th><th>Event</th><th>Decision</th><th>Details</th></tr></thead><tbody id="audit-rows"></tbody></table></div></article>
+        <article class="card"><div class="inline" style="justify-content:space-between"><p class="sub">Recent persisted audit events. Full access requires admin authentication.</p><div class="actions"><button id="verify-audit" class="btn" type="button">Verify integrity</button><button id="export-audit" class="btn" type="button">Export JSON</button><button id="export-audit-csv" class="btn" type="button">Export CSV</button></div></div><div id="audit-state" class="state loading">Loading audit records…</div><div id="audit-integrity" class="state empty" role="status" aria-live="polite">Integrity has not been checked.</div><div class="table-wrap"><table><caption>Recent audit events returned by the backend</caption><thead><tr><th>Time</th><th>Request ID</th><th>Event</th><th>Decision</th><th>Details</th></tr></thead><tbody id="audit-rows"></tbody></table></div></article>
       </section>
 
       <section class="section" id="emergency" aria-labelledby="emergency-title">
         <h2 class="page-title" id="emergency-title">Emergency Response Center</h2>
-        <article class="card"><div class="callout danger">Freezing an agent blocks future evaluations. This control does not revoke wallet keys or cancel pending blockchain transactions.</div><div id="emergency-agents" class="state loading">Loading agent states…</div></article>
+        <article class="card"><div class="callout danger">The global kill switch blocks all new evaluations. Freezing an agent blocks that agent only. Neither action revokes wallet keys or cancels pending blockchain transactions.</div><div class="inline"><div id="kill-switch-state" class="state loading" role="status" aria-live="polite">Checking global kill switch…</div><button id="kill-switch-toggle" class="btn btn-red" type="button" disabled>Enable global kill switch</button></div><div id="emergency-agents" class="state loading">Loading agent states…</div></article>
       </section>
 
       <section class="section" id="telegram" aria-labelledby="telegram-title">
         <h2 class="page-title" id="telegram-title">Telegram Monitoring</h2>
-        <article class="card"><p class="sub">Integration status reported by this backend.</p><div id="telegram-state" class="state loading">Checking Telegram integration…</div></article>
+        <article class="card"><p class="sub">Optional server-side alerts. Bot credentials remain in backend environment settings.</p><div id="telegram-state" class="state loading">Checking Telegram integration…</div><button id="telegram-test" class="btn" type="button" disabled>Send test notification</button></article>
       </section>
 
       <section class="section" id="settings" aria-labelledby="settings-title">
@@ -265,6 +267,7 @@
     )).replace(/\/+$/, "");
     let adminToken = "";
     let auditCache = [];
+    let activityCache = [];
     const $ = (id) => document.getElementById(id);
 
     function node(tag, text, className) {
@@ -485,7 +488,7 @@
       setBusy(button, true, "Evaluating…");
       const payload = {
         agent_id: $("agent-id").value, sender: $("sender-id").value.trim(), recipient: $("recipient-id").value.trim(),
-        amount_near: Number($("amount-near").value), prompt: $("prompt-text").value, memo: $("memo-text").value || null
+        amount_near: Number($("amount-near").value), network: "testnet", prompt: $("prompt-text").value, memo: $("memo-text").value || null, contract_account: $("contract-account").value.trim() || null
       };
       try {
         const result = await submitEvaluation(payload, `ui-${crypto.randomUUID()}`);
@@ -664,7 +667,6 @@
       if (!adminToken) {
         auditCache = [];
         $("audit-rows").replaceChildren();
-        renderActivity([]);
         setState("audit-state", "Admin authentication required to load audit events.", "empty");
         return;
       }
@@ -672,7 +674,6 @@
       try {
         const rows = await api("/api/v1/audit?limit=100", { admin: true });
         auditCache = rows;
-        renderActivity(rows);
         const body = $("audit-rows"); body.replaceChildren();
         for (const item of rows) {
           const tr = document.createElement("tr");
@@ -684,11 +685,46 @@
         setState("audit-state", rows.length ? `${rows.length} events loaded from persistent audit storage.` : "Audit API returned no events.", rows.length ? "ok" : "empty");
       } catch (error) { auditCache = []; $("audit-rows").replaceChildren(); setState("audit-state", safeError(error), "error"); }
     }
-    $("export-audit").addEventListener("click", () => {
-      if (!auditCache.length) { setState("audit-state", "No loaded audit records to export.", "empty"); return; }
-      const file = new Blob([JSON.stringify(auditCache, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(file); const link = document.createElement("a");
-      link.href = url; link.download = "agentguard-v4-audit.json"; link.click(); URL.revokeObjectURL(url);
+    async function loadActivity() {
+      try { activityCache = await api("/api/v1/activity?limit=6"); renderActivity(activityCache); }
+      catch (error) { activityCache = []; renderActivity([]); setState("activity-feed", safeError(error), "error"); }
+    }
+    async function downloadAudit(format) {
+      if (!adminToken) { setState("audit-state", "Enter the admin token to export audit data.", "warn"); return; }
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/audit/export?format=${format}`, {
+          headers: { Authorization: `Bearer ${adminToken}` }, signal: AbortSignal.timeout(12000)
+        });
+        if (!response.ok) throw new Error(`${response.status}: audit export failed`);
+        const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement("a");
+        link.href = url; link.download = format === "csv" ? "agentguard-v4-audit.csv" : "agentguard-v4-audit.json"; link.click(); URL.revokeObjectURL(url);
+      } catch (error) { setState("audit-state", safeError(error), "error"); }
+    }
+    $("export-audit").addEventListener("click", () => downloadAudit("json"));
+    $("export-audit-csv").addEventListener("click", () => downloadAudit("csv"));
+    $("verify-audit").addEventListener("click", async () => {
+      if (!adminToken) { setState("audit-integrity", "Enter the admin token to verify audit integrity.", "warn"); return; }
+      setState("audit-integrity", "Verifying audit hash chain…", "loading");
+      try {
+        const result = await api("/api/v1/audit/verify", { admin: true });
+        setState("audit-integrity", result.valid ? `Valid SHA-256 chain • ${result.verified_count} events verified. This detects edits but does not make SQLite immutable.` : `Integrity failure at event ${result.invalid_event_id} • ${result.verified_count} preceding events verified.`, result.valid ? "ok" : "error");
+      } catch (error) { setState("audit-integrity", safeError(error), "error"); }
+    });
+
+    async function loadKillSwitch() {
+      try {
+        const data = await api("/api/v1/kill-switch");
+        setState("kill-switch-state", `Global kill switch ${data.enabled ? "ENABLED" : "disabled"} • policy v${data.policy_version}`, data.enabled ? "error" : "ok");
+        const button = $("kill-switch-toggle"); button.disabled = !adminToken; button.textContent = data.enabled ? "Disable global kill switch" : "Enable global kill switch";
+        button.dataset.enabled = String(data.enabled);
+      } catch (error) { setState("kill-switch-state", safeError(error), "error"); $("kill-switch-toggle").disabled = true; }
+    }
+    $("kill-switch-toggle").addEventListener("click", async (event) => {
+      const button = event.currentTarget; if (!adminToken) { setState("kill-switch-state", "Enter the admin token to change the kill switch.", "warn"); return; }
+      setBusy(button, true, "Updating…");
+      try { await api("/api/v1/kill-switch", { method: "PUT", admin: true, body: JSON.stringify({ enabled: button.dataset.enabled !== "true" }) }); await Promise.all([loadKillSwitch(), loadOverview(), loadActivity(), loadAudit()]); }
+      catch (error) { setState("kill-switch-state", safeError(error), "error"); }
+      finally { button.disabled = false; await loadKillSwitch(); }
     });
 
     async function loadSettings() {
@@ -711,18 +747,26 @@
       event.preventDefault(); adminToken = $("admin-token").value;
       $("admin-token").value = "";
       setState("admin-state", adminToken ? "Admin token held in page memory for this tab session." : "No admin token entered.", adminToken ? "ok" : "empty");
+      refreshData();
     });
-    $("clear-admin").addEventListener("click", () => { adminToken = ""; $("admin-token").value = ""; setState("admin-state", "Admin token cleared from page memory.", "empty"); });
+    $("clear-admin").addEventListener("click", () => { adminToken = ""; $("admin-token").value = ""; setState("admin-state", "Admin token cleared from page memory.", "empty"); refreshData(); });
 
     async function loadTelegram() {
       setState("telegram-state", "Checking Telegram integration…", "loading");
       try {
         const data = await api("/api/v1/telegram/status");
         setState("telegram-state", `${data.status.toUpperCase()}: ${data.message}`, data.enabled && data.configured ? "ok" : "warn");
+        $("telegram-test").disabled = !(data.configured && adminToken);
       } catch (error) { setState("telegram-state", safeError(error), "error"); }
     }
+    $("telegram-test").addEventListener("click", async (event) => {
+      const button = event.currentTarget; setBusy(button, true, "Sending…");
+      try { await api("/api/v1/telegram/test", { method: "POST", admin: true }); setState("telegram-state", "Test notification delivery confirmed by Telegram.", "ok"); }
+      catch (error) { setState("telegram-state", safeError(error), "error"); }
+      finally { button.disabled = false; await loadTelegram(); }
+    });
     async function refreshData() {
-      await Promise.allSettled([loadOverview(), loadAgents(), loadThreats(), loadPolicy(), loadApprovals(), loadAudit(), loadSettings(), loadTelegram(), loadSimulationLab(), checkRpcHealth()]);
+      await Promise.allSettled([loadOverview(), loadAgents(), loadThreats(), loadPolicy(), loadApprovals(), loadAudit(), loadActivity(), loadKillSwitch(), loadSettings(), loadTelegram(), loadSimulationLab(), checkRpcHealth()]);
     }
     $("refresh-all").addEventListener("click", refreshData);
     function updateActiveNavigation() {

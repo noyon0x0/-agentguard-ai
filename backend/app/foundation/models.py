@@ -24,6 +24,8 @@ class SecurityEvaluation(Base):
     agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     recipient: Mapped[str] = mapped_column(String(64), nullable=False)
     amount_near: Mapped[float] = mapped_column(Float, nullable=False)
+    network: Mapped[str] = mapped_column(String(16), nullable=False, default="testnet")
+    policy_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     memo: Mapped[str | None] = mapped_column(Text, nullable=True)
     tool_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -55,6 +57,19 @@ class PolicyConfiguration(Base):
     duplicate_window_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
     allowed_tools: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     allowed_contracts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    policy_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    global_kill_switch: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class PolicyRevision(Base):
+    __tablename__ = "policy_revisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, index=True)
+    snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class AgentState(Base):
@@ -71,7 +86,11 @@ class AuditEvent(Base):
     request_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(40), nullable=False)
     decision: Mapped[str] = mapped_column(String(16), nullable=False)
+    agent_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    policy_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    previous_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    event_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )

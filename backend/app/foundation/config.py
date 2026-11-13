@@ -17,6 +17,8 @@ class Settings:
     admin_token: str = _LOCAL_DEMO_ADMIN_TOKEN
     near_testnet_rpc_url: str = "https://rpc.testnet.near.org"
     near_rpc_timeout_seconds: float = 5.0
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -30,4 +32,6 @@ class Settings:
             admin_token=os.getenv("AGENTGUARD_ADMIN_TOKEN", cls.admin_token),
             near_testnet_rpc_url=os.getenv("AGENTGUARD_NEAR_TESTNET_RPC_URL", cls.near_testnet_rpc_url),
             near_rpc_timeout_seconds=float(os.getenv("AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS", "5")),
+            telegram_bot_token=os.getenv("AGENTGUARD_TELEGRAM_BOT_TOKEN", ""),
+            telegram_chat_id=os.getenv("AGENTGUARD_TELEGRAM_CHAT_ID", ""),
         )

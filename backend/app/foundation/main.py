@@ -5,6 +5,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import threading
 import logging
+import re
+import uuid
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -65,14 +67,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.middleware("http")
     async def safe_request_logging(request, call_next):
+        supplied_id = request.headers.get("x-request-id", "")
+        request_id = supplied_id if re.fullmatch(r"[A-Za-z0-9._:-]{1,64}", supplied_id) else str(uuid.uuid4())
+        request.state.request_id = request_id
         try:
             response = await call_next(request)
         except Exception as exc:
-            logger.error("request_failed", extra={"method": request.method, "error_type": type(exc).__name__})
+            logger.error("request_failed", extra={"method": request.method, "error_type": type(exc).__name__, "request_id": request_id})
             raise
+        response.headers["X-Request-ID"] = request_id
         logger.info(
             "request_completed",
-            extra={"method": request.method, "status_code": response.status_code},
+            extra={"method": request.method, "status_code": response.status_code, "request_id": request_id},
         )
         return response
 
