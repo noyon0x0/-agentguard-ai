@@ -38,6 +38,20 @@ python -m uvicorn app.main:app --app-dir backend --env-file .env --host 127.0.0.
 
 Open `http://127.0.0.1:8000/`. The dashboard operator-token field uses the configured token in page memory only.
 
+## Render deployment
+
+Deploy this folder as a **Web Service** from the `integration/near-hackathon-2026` branch of the repository. Set the Root Directory to `near-hackathon-2026`, choose Python 3.12, and use:
+
+```text
+Build Command: pip install -r backend/requirements.txt
+Start Command: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+Health Check Path: /api/v1/health
+```
+
+Set `NEAR_HACKATHON_AGENTGUARD_ENVIRONMENT=production`, `NEAR_HACKATHON_AGENTGUARD_LOG_LEVEL=INFO`, `NEAR_HACKATHON_AGENTGUARD_NEAR_TESTNET_RPC_URL=https://rpc.testnet.fastnear.com`, and `NEAR_HACKATHON_AGENTGUARD_NEAR_TRANSACTIONS_ENABLED=false`. Generate a unique `NEAR_HACKATHON_AGENTGUARD_ADMIN_TOKEN` in Render's secret environment settings. Do not configure private keys in Render. Sender account and public key settings are optional and only needed for read-only account monitoring; transaction submission stays disabled until all preflight and approval gates pass.
+
+The default SQLite database is stored inside the service directory, which is ephemeral on Render. To retain state, attach a persistent disk mounted at `/var/data` and set `NEAR_HACKATHON_AGENTGUARD_DATABASE_URL=sqlite:////var/data/near_hackathon_agentguard.sqlite3`. No separate Static Site is needed: FastAPI serves the dashboard at `/` and `/dashboard`.
+
 ## Verify the API and Testnet settings
 
 ```sh
