@@ -70,16 +70,21 @@ schema at `/openapi.json`.
   hash and signer with the read-only `tx` status query at `FINAL` on Testnet. It returns an
   explorer URL only after the RPC response matches both requested values.
 
-No private keys, wallet credentials, or signing data are accepted. The policy
-engine is deterministic and never consumes an AI decision. Decisions, policy
-changes, agent state changes, and human approval outcomes are stored in SQLite.
+No private keys, wallet credentials, or signing data are accepted by policy
+evaluation or dashboard APIs. The policy engine is deterministic and never
+consumes an AI decision. A separate, default-disabled Testnet experiment is
+documented below; it uses the isolated signer only after policy and operator
+confirmation. Decisions, policy changes, agent state changes, and human
+approval outcomes are stored in SQLite.
 Structured logs contain method/status metadata and exception class only; request
 bodies, authorization headers, account strings, and exception messages are not
 logged.
 
-The NEAR client permits only `status`, `query`, and `tx` status methods. It rejects non-Testnet RPC network identities,
-uses a bounded timeout, and does not expose the configured endpoint in API
-responses. No transaction submission or signing RPC method is available.
+The read-only NEAR client permits only `status`, `query`, and `tx` status
+methods. It rejects non-Testnet RPC network identities, uses a bounded timeout,
+and does not expose the configured endpoint in API responses. Transaction
+submission is performed only by the separate CLI/SDK signer path below; it is
+not exposed through the read-only client.
 
 The SQLite schema is created on app startup. For production deployment, replace
 startup schema creation with versioned migrations before operating against

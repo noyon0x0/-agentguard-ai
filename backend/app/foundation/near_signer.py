@@ -85,6 +85,13 @@ class NearCliKeychainTestnetSigner:
     """Use near-cli-rs to sign from its OS keychain without exporting key data."""
 
     NETWORK_CONNECTION = "agentguard-testnet"
+    # The CLI needs the executable path and the current user's OS-keychain
+    # profile. Passing the whole backend environment would also expose unrelated
+    # API tokens and application credentials to the signer process.
+    _CLI_ENVIRONMENT_KEYS = (
+        "PATH", "APPDATA", "LOCALAPPDATA", "USERPROFILE", "HOME",
+        "XDG_CONFIG_HOME", "SystemRoot", "WINDIR", "TEMP", "TMP",
+    )
 
     def __init__(self, rpc_url: str, *, cli_path: str | None = None):
         if rpc_url != "https://rpc.testnet.near.org":
@@ -129,11 +136,15 @@ class NearCliKeychainTestnetSigner:
             amount_arg, "network-config", self.NETWORK_CONNECTION,
             "sign-with-keychain", "send",
         ]
+        cli_environment = {
+            key: value for key in self._CLI_ENVIRONMENT_KEYS
+            if (value := os.environ.get(key)) is not None
+        }
         try:
             result = subprocess.run(
                 command, check=False, capture_output=True, text=True,
                 timeout=90, stdin=subprocess.DEVNULL,
-                env=os.environ.copy(),
+                env=cli_environment,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise NearSignerError("NEAR keychain signer could not complete the Testnet request") from exc

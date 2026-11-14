@@ -30,7 +30,7 @@ The v4 dashboard is served by `app.main_v3:app` at `/dashboard-v4` on port 8000.
 | Status | Features |
 | --- | --- |
 | **Implemented** | FastAPI foundation; deterministic policy; SQLite persistence; idempotency, limits, recipient allowlists, approvals and audit chain; read-only NEAR monitoring; explicitly gated Testnet transfer endpoint with a 0.01 NEAR cap, OS-keychain-backed near-cli-rs signer, explicit pre-broadcast confirmation, preflight checks, final status verification, and transaction audit history; simulated and Testnet attack checks. |
-| **Tested** | The complete suite passed **96 tests, 1 live transaction test skipped, and 1 existing warning** on 2026-11-14, including the browser smoke test. |
+| **Tested** | The complete suite passed **96 tests, 1 live transaction test skipped, and 1 existing warning** during this audit on 2026-11-14, including the browser smoke test. |
 | **Mocked** | Automated NEAR RPC tests use mocked provider replies. Simulations use generated requests but execute the real local policy engine. Telegram delivery tests must mock the provider; no real delivery is implied. |
 | **Unverified** | Continued NEAR RPC availability beyond the point-in-time checks below, actual Telegram delivery, cross-browser/mobile/accessibility review, deployment security, and multi-process consistency. |
 | **Planned / limited** | A SHA-256 chain detects edits but SQLite remains operator-editable; no external immutable anchor/signature exists. Authentication is one shared bearer token, migrations are additive rather than managed by Alembic, and public threat intelligence is not connected. |
@@ -143,6 +143,9 @@ Browser dashboard
 The combined app serves `/dashboard-v4` and mounts the v4 API at
 `/v4/api/v1/`. The foundation app owns its configuration, database lifecycle,
 routes, and NEAR client. See [Architecture](docs/ARCHITECTURE.md) for details.
+The legacy v3 routes remain available for compatibility. They do not use the
+v4 shared bearer-token authorization layer, so run this prototype on loopback
+only and do not expose the combined app to an untrusted network.
 
 The main API surfaces are health (`GET /v4/api/v1/health`), policy evaluation
 (`POST /v4/api/v1/evaluations`), admin-only review decisions and audit
@@ -158,7 +161,7 @@ python -m pip install -r backend\requirements.txt
 backend\.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir -q
 ```
 
-The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC and signer responses; they do not broadcast a real transaction. The latest complete run on 2026-11-14 passed **96 tests, 1 live Testnet transaction test skipped, and 1 warning** (exit 0), including the browser smoke test. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
+The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC and signer responses; they do not broadcast a real transaction. The latest complete run in this audit on 2026-11-14 passed **96 tests, 1 live Testnet transaction test skipped, and 1 warning** (exit 0), including the browser smoke test. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
 
 ## Local demo
 

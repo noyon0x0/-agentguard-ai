@@ -113,6 +113,10 @@ def test_near_cli_signer_uses_os_keychain_and_only_returns_validated_hash(monkey
         stdout = "Transaction ID: HEgnVQZfs9uJzrqTob4g2Xmebqodq9waZvApSkrbcAhd"
         stderr = "diagnostic detail"
 
+    monkeypatch.setenv("PATH", "C:/safe/path")
+    monkeypatch.setenv("APPDATA", "C:/Users/test/AppData/Roaming")
+    monkeypatch.setenv("AGENTGUARD_ADMIN_TOKEN", "must-not-reach-cli")
+    monkeypatch.setenv("AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY", "must-not-reach-cli")
     monkeypatch.setattr("app.foundation.near_signer.shutil.which", lambda binary: "near.exe")
     monkeypatch.setattr("app.foundation.near_signer.subprocess.run", lambda args, **kwargs: calls.append((args, kwargs)) or Result())
     signer = NearCliKeychainTestnetSigner("https://rpc.testnet.near.org")
@@ -121,6 +125,10 @@ def test_near_cli_signer_uses_os_keychain_and_only_returns_validated_hash(monkey
     assert args == ["near.exe", "--quiet", "tokens", "sender.testnet", "send-near", "receiver.testnet", "0.01 NEAR", "network-config", "agentguard-testnet", "sign-with-keychain", "send"]
     assert kwargs["stdin"] is __import__("subprocess").DEVNULL
     assert kwargs["capture_output"] is True
+    assert kwargs["env"]["PATH"] == "C:/safe/path"
+    assert kwargs["env"]["APPDATA"] == "C:/Users/test/AppData/Roaming"
+    assert "AGENTGUARD_ADMIN_TOKEN" not in kwargs["env"]
+    assert "AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY" not in kwargs["env"]
 
 
 def test_near_cli_signer_fails_closed_for_bad_endpoint_or_submission(monkeypatch):
