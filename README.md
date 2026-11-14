@@ -26,7 +26,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -r backend\requirements.txt
 Copy-Item .env.example .env
-# Edit .env and replace the operator token placeholder.
+# Edit .env and set a unique NEAR_HACKATHON_AGENTGUARD_ADMIN_TOKEN.
 python -m uvicorn app.main:app --app-dir backend --env-file .env --host 127.0.0.1 --port 8000
 ```
 
