@@ -9,9 +9,10 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlparse
 
 import requests
+
+from .config import OFFICIAL_NEAR_TESTNET_RPC_URL
 
 
 class NearIntegrationError(Exception):
@@ -96,10 +97,8 @@ class NearTestnetClient:
     """Permit only status and state/status queries; never accepts signing data."""
 
     def __init__(self, rpc_url: str, timeout_seconds: float = 5.0):
-        parsed = urlparse(rpc_url)
-        local_http = parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1"}
-        if not parsed.hostname or (parsed.scheme != "https" and not local_http):
-            raise ValueError("NEAR RPC URL must use HTTPS (HTTP is allowed only for localhost)")
+        if rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
+            raise ValueError("NEAR RPC URL must exactly match the configured official FastNear Testnet endpoint")
         if not 0.1 <= timeout_seconds <= 60:
             raise ValueError("NEAR RPC timeout must be between 0.1 and 60 seconds")
         self.rpc_url = rpc_url

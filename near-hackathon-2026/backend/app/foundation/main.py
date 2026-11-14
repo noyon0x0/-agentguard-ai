@@ -1,4 +1,4 @@
-"""AgentGuard foundation app; explicitly has no signing or broadcast capability."""
+"""AgentGuard API with non-executing policy intake and a separately gated NEAR Testnet signer."""
 
 from __future__ import annotations
 
@@ -65,6 +65,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = config
     app.state.security_lock = threading.RLock()
     app.state.near_client = near_client
+    app.state.near_keychain_verification = None
 
     @app.middleware("http")
     async def safe_request_logging(request, call_next):

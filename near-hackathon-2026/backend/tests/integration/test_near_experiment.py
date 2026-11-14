@@ -59,7 +59,7 @@ def make_client(monkeypatch, *, rpc=None, success=True):
     monkeypatch.setattr("app.foundation.near_experiment.PyNearTestnetSigner", FakeSigner)
     settings = Settings(
         database_url="sqlite://", log_level="CRITICAL", admin_token="near-experiment-admin",
-        near_testnet_rpc_url="https://rpc.testnet.near.org", near_sender_account="sender.testnet",
+        near_testnet_rpc_url="https://rpc.testnet.fastnear.com", near_sender_account="sender.testnet",
         near_authorized_recipient="treasury.testnet", near_unauthorized_recipient="attacker.testnet",
         near_testnet_private_key=TEST_PRIVATE_KEY, near_public_key="", near_transactions_enabled=True,
     )
@@ -213,8 +213,11 @@ def test_live_transfer_feature_defaults_to_disabled(monkeypatch):
 def test_keychain_signing_requires_an_exact_official_testnet_key_match(monkeypatch):
     import app.foundation.near_experiment as experiment
 
-    monkeypatch.setattr(experiment.shutil, "which", lambda name: "near.exe")
-    monkeypatch.setattr(NearCliKeychainTestnetSigner, "configured_for_official_testnet", classmethod(lambda cls: True))
+    monkeypatch.setattr(
+        NearCliKeychainTestnetSigner,
+        "keychain_status",
+        classmethod(lambda cls, account, key: "verified"),
+    )
     settings = Settings(
         near_sender_account="sender.testnet", near_authorized_recipient="treasury.testnet",
         near_unauthorized_recipient="attacker.testnet", near_public_key=TEST_PUBLIC_KEY,
@@ -222,6 +225,55 @@ def test_keychain_signing_requires_an_exact_official_testnet_key_match(monkeypat
     )
     sender, recipient = experiment._live_configuration(settings)
     assert sender == "sender.testnet" and recipient == "treasury.testnet"
+
+
+def test_keychain_public_key_not_verified_blocks_live_configuration(monkeypatch):
+    import app.foundation.near_experiment as experiment
+
+    monkeypatch.setattr(
+        NearCliKeychainTestnetSigner,
+        "keychain_status",
+        classmethod(lambda cls, account, key: "configured but not verified"),
+    )
+    settings = Settings(
+        near_sender_account="sender.testnet",
+        near_authorized_recipient="treasury.testnet",
+        near_unauthorized_recipient="attacker.testnet",
+        near_public_key=TEST_PUBLIC_KEY,
+        near_transactions_enabled=True,
+    )
+
+    try:
+        experiment._live_configuration(settings)
+    except Exception as exc:
+        assert getattr(exc, "detail", {}).get("code") == "NEAR_TESTNET_KEYCHAIN_SIGNER_NOT_READY"
+    else:
+        raise AssertionError("Unverified keychain signer must not enable transactions")
+
+
+def test_status_keeps_transaction_readiness_false_when_keychain_verification_times_out(monkeypatch):
+    monkeypatch.setattr(
+        NearCliKeychainTestnetSigner,
+        "keychain_status",
+        classmethod(lambda cls, account, key: "configured but not verified"),
+    )
+    settings = Settings(
+        database_url="sqlite://", log_level="CRITICAL", admin_token="near-experiment-admin",
+        near_testnet_rpc_url="https://rpc.testnet.fastnear.com", near_sender_account="sender.testnet",
+        near_authorized_recipient="treasury.testnet", near_unauthorized_recipient="attacker.testnet",
+        near_testnet_private_key="", near_public_key=TEST_PUBLIC_KEY, near_transactions_enabled=True,
+    )
+    app = create_app(settings)
+    app.state.near_client = FakeNear()
+    client = TestClient(app, raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer near-experiment-admin"}
+
+    with client:
+        response = client.get("/api/v1/near/experiment/status", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["signer_verified"] is False
+    assert response.json()["transaction_ready"] is False
 
 
 def test_allow_decision_waits_for_explicit_confirmation_and_confirmation_is_idempotent(monkeypatch):

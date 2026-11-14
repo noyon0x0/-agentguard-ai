@@ -70,7 +70,7 @@ See [.env.example](.env.example). Key settings:
 | Setting | Default | Purpose |
 |---|---|---|
 | `NEAR_HACKATHON_AGENTGUARD_ADMIN_TOKEN` | unset | Required for operator-only actions; no built-in credential. |
-| `NEAR_HACKATHON_AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | Read-only NEAR Testnet JSON-RPC. Execution refuses any other URL. |
+| `NEAR_HACKATHON_AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.fastnear.com` | FastNear regular Testnet JSON-RPC for current account/key state and immediate transaction checks. Execution refuses any other URL. |
 | `NEAR_HACKATHON_AGENTGUARD_NEAR_SENDER_ACCOUNT` | unset | Public Testnet account ID for monitoring and optional execution. |
 | `NEAR_HACKATHON_AGENTGUARD_NEAR_PUBLIC_KEY` | unset | Public key used to verify the on-chain permission. |
 | `NEAR_HACKATHON_AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT` | unset | Explicitly authorized Testnet recipient. |
@@ -78,6 +78,8 @@ See [.env.example](.env.example). Key settings:
 | `NEAR_HACKATHON_AGENTGUARD_DATABASE_URL` | project-local SQLite | Separate local database location. |
 
 Live execution additionally requires an isolated Testnet signer/keychain profile, account and permission verification, admin authentication, policy ALLOW or approved WARN, a dedicated disposable account, and a second explicit confirmation. The dashboard never receives private key material. Do not enable execution or initiate a live transfer without explicit human authorization.
+
+The near-cli-rs `testnet` network profile must use the same exact RPC URL, `https://rpc.testnet.fastnear.com`. This project checks current account/key state and newly submitted transactions, so it does not require archival history. Keychain readiness remains disabled when the CLI profile points to another provider.
 
 ## Limitations
 

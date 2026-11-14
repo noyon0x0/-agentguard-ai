@@ -8,6 +8,7 @@ from pathlib import Path
 
 _DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / "near_hackathon_agentguard.sqlite3"
 _DEFAULT_DATABASE_URL = f"sqlite:///{_DEFAULT_DATABASE_PATH.as_posix()}"
+OFFICIAL_NEAR_TESTNET_RPC_URL = "https://rpc.testnet.fastnear.com"
 _NEAR_HACKATHON_AGENTGUARD_TESTNET_ACCOUNT = ""
 _NEAR_HACKATHON_AGENTGUARD_TESTNET_PUBLIC_KEY = ""
 _NEAR_HACKATHON_AGENTGUARD_TESTNET_AUTHORIZED_RECIPIENT = ""
@@ -23,7 +24,7 @@ class Settings:
     # Administrative routes are disabled until the operator configures a
     # unique token. Never ship a known default bearer credential.
     admin_token: str = ""
-    near_testnet_rpc_url: str = "https://rpc.testnet.near.org"
+    near_testnet_rpc_url: str = OFFICIAL_NEAR_TESTNET_RPC_URL
     near_rpc_timeout_seconds: float = 5.0
     near_sender_account: str = _NEAR_HACKATHON_AGENTGUARD_TESTNET_ACCOUNT
     near_authorized_recipient: str = _NEAR_HACKATHON_AGENTGUARD_TESTNET_AUTHORIZED_RECIPIENT

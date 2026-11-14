@@ -12,7 +12,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
-from .near_client import NearInvalidInput, validate_transaction_hash
+from .config import OFFICIAL_NEAR_TESTNET_RPC_URL
+from .near_client import NearInvalidInput, validate_account_id, validate_transaction_hash
 
 
 class NearSignerError(Exception):
@@ -31,7 +32,7 @@ class PyNearTestnetSigner:
     """Private key is injected from backend configuration and never serialized."""
 
     def __init__(self, rpc_url: str, private_key: str):
-        if rpc_url != "https://rpc.testnet.near.org":
+        if rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
             raise NearSignerError("Live signing is restricted to the official NEAR Testnet RPC")
         if not private_key.startswith("ed25519:"):
             raise NearSignerError("A valid Testnet ed25519 signing key is not configured")
@@ -84,7 +85,7 @@ class PyNearTestnetSigner:
 class NearCliKeychainTestnetSigner:
     """Use near-cli-rs to sign from its OS keychain without exporting key data."""
 
-    NETWORK_CONNECTION = "agentguard-testnet"
+    NETWORK_CONNECTION = "testnet"
     # The CLI needs the executable path and the current user's OS-keychain
     # profile. Passing the whole backend environment would also expose unrelated
     # API tokens and application credentials to the signer process.
@@ -94,7 +95,7 @@ class NearCliKeychainTestnetSigner:
     )
 
     def __init__(self, rpc_url: str, *, cli_path: str | None = None):
-        if rpc_url != "https://rpc.testnet.near.org":
+        if rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
             raise NearSignerError("Live signing is restricted to the official NEAR Testnet RPC")
         resolved = cli_path or shutil.which("near")
         if not resolved:
@@ -115,16 +116,53 @@ class NearCliKeychainTestnetSigner:
             with config_path.open("rb") as config_file:
                 config = tomllib.load(config_file)
             connection = config.get("network_connection", {}).get(cls.NETWORK_CONNECTION, {})
-            from urllib.parse import urlparse
-
-            parsed = urlparse(connection.get("rpc_url", ""))
             return (
                 connection.get("network_name") == "testnet"
-                and parsed.scheme == "https"
-                and parsed.hostname == "rpc.testnet.near.org"
+                and connection.get("rpc_url") == OFFICIAL_NEAR_TESTNET_RPC_URL
             )
         except (OSError, tomllib.TOMLDecodeError, AttributeError):
             return False
+
+    @classmethod
+    def keychain_status(cls, account_id: str, expected_public_key: str) -> str:
+        """Verify the account's keychain public key without signing or returning it."""
+        cli_path = shutil.which("near")
+        if not cli_path or not expected_public_key or not cls.configured_for_official_testnet():
+            return "not configured"
+        try:
+            account_id = validate_account_id(account_id)
+        except NearInvalidInput:
+            return "not configured"
+
+        command = [
+            cli_path, "--quiet", "account", "get-public-key", "from-keychain",
+            account_id, "network-config", cls.NETWORK_CONNECTION,
+        ]
+        cli_environment = {
+            key: value for key in cls._CLI_ENVIRONMENT_KEYS
+            if (value := os.environ.get(key)) is not None
+        }
+        try:
+            result = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                stdin=subprocess.DEVNULL,
+                env=cli_environment,
+            )
+        except (OSError, subprocess.SubprocessError, UnicodeError, ValueError):
+            return "configured but not verified"
+
+        if result.returncode == 0 and any(
+            line.strip() == expected_public_key
+            for line in (result.stdout or "").splitlines()
+        ):
+            return "verified"
+        # Never propagate or log CLI output: it is retained only long enough to
+        # compare the public-key line and may contain sensitive diagnostics.
+        return "configured but not verified"
 
     def send_transfer(self, sender: str, recipient: str, amount_yocto: int) -> str:
         if not isinstance(amount_yocto, int) or amount_yocto <= 0:

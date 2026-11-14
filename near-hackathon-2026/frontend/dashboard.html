@@ -653,7 +653,7 @@
       try {
         const data = await api("/api/v1/near/experiment/status", { admin: true, timeoutMs: 60000 });
         const liveState = data.transaction_ready ? "ready" : data.transactions_enabled ? "misconfigured" : "disabled";
-        const summary = `Network ${data.network} • RPC ${data.rpc_status} • account ${data.sender_account || "not configured"} (${data.account_verified ? "verified" : "unverified"}) • public key ${data.public_key || "not configured"} • balance ${data.sender_balance_near ?? "unavailable"} NEAR • faucet funding ${data.faucet_funding_status} (source verified: ${data.funding_source_verified}) • authorized recipient ${data.authorized_recipient || "not configured"} (${data.recipient_verified ? "verified" : "unverified"}) • signer ${data.signer_permission_status} • live transfers ${liveState} • cap ${data.max_transfer_near} NEAR`;
+        const summary = `Network ${data.network} • RPC ${data.rpc_status} • account ${data.sender_account || "not configured"} (${data.account_verified ? "verified" : "unverified"}) • public key ${data.public_key || "not configured"} • balance ${data.sender_balance_near ?? "unavailable"} NEAR • faucet funding ${data.faucet_funding_status} (source verified: ${data.funding_source_verified}) • authorized recipient ${data.authorized_recipient || "not configured"} (${data.recipient_verified ? "verified" : "unverified"}) • signer ${data.signer_verified ? "verified" : data.signer_status}; on-chain permission ${data.signer_permission_status} • live transfers ${liveState} • cap ${data.max_transfer_near} NEAR`;
         setState("near-experiment-status", summary, data.rpc_status === "healthy" ? "ok" : "error");
         if (data.account_explorer_url) {
           const explorer = node("a", "Open Testnet account explorer");
@@ -873,8 +873,10 @@
           ["Application", data.app_name], ["Environment", data.environment], ["Database", data.database_backend],
           ["NEAR network", data.near_network_required], ["RPC configured", data.near_rpc_configured ? "Yes" : "No"],
           ["RPC timeout", `${data.near_rpc_timeout_seconds} seconds`], ["Admin auth", data.admin_auth_configured ? "Configured" : "Not configured"],
-          ["Transaction signing", data.transaction_signing_enabled ? "Enabled" : "Disabled"],
-          ["Transaction submission", data.transaction_submission_enabled ? "Enabled" : "Disabled"]
+          ["Signer verified", data.signer_verified ? "Yes" : "No"],
+          ["Signing configuration", data.transaction_signing_enabled ? "Configured" : "Not ready"],
+          ["Transaction signer status", data.transaction_signer_status],
+          ["Transaction submission readiness", data.transaction_submission_enabled ? "Ready" : data.transaction_readiness_status]
         ];
         for (const [key, value] of entries) { const row = node("div", null, "row"); row.append(node("dt", key, "row-title"), node("dd", value, "row-detail")); list.append(row); }
         setState("settings-state", "Settings loaded from backend; no secrets returned.", "ok");

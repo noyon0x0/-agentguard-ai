@@ -7,7 +7,7 @@ the isolated Testnet signer and requires an explicit feature flag and key.
 from __future__ import annotations
 
 import uuid
-import shutil
+import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from .approval_workflow import resolve_human_decision
 from .audit_chain import append_audit_event
+from .config import OFFICIAL_NEAR_TESTNET_RPC_URL
 from .models import AgentState, AuditEvent, PolicyConfiguration, SecurityEvaluation
 from .near_client import (
     NearIntegrationError,
@@ -37,14 +38,8 @@ GAS_RESERVE_NEAR = Decimal("0.1")
 def _live_configuration(settings) -> tuple[str, str]:
     if not settings.near_transactions_enabled:
         raise HTTPException(status_code=503, detail={"code": "NEAR_TESTNET_TRANSACTIONS_DISABLED"})
-    if settings.near_testnet_rpc_url != "https://rpc.testnet.near.org":
+    if settings.near_testnet_rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
         raise HTTPException(status_code=503, detail={"code": "OFFICIAL_TESTNET_RPC_REQUIRED"})
-    keychain_signer_ready = bool(
-        shutil.which("near") and settings.near_public_key
-        and NearCliKeychainTestnetSigner.configured_for_official_testnet()
-    )
-    if not settings.near_testnet_private_key and not keychain_signer_ready:
-        raise HTTPException(status_code=503, detail={"code": "NEAR_TESTNET_KEYCHAIN_SIGNER_NOT_READY"})
     try:
         sender = validate_account_id(settings.near_sender_account)
         authorized = validate_account_id(settings.near_authorized_recipient)
@@ -55,6 +50,10 @@ def _live_configuration(settings) -> tuple[str, str]:
         raise HTTPException(status_code=503, detail={"code": "TESTNET_ACCOUNTS_MUST_USE_TESTNET_SUFFIX"})
     if len({sender, authorized, settings.near_unauthorized_recipient}) != 3:
         raise HTTPException(status_code=503, detail={"code": "NEAR_EXPERIMENT_ACCOUNTS_MUST_DIFFER"})
+    if not settings.near_testnet_private_key and (
+        NearCliKeychainTestnetSigner.keychain_status(sender, settings.near_public_key) != "verified"
+    ):
+        raise HTTPException(status_code=503, detail={"code": "NEAR_TESTNET_KEYCHAIN_SIGNER_NOT_READY"})
     return sender, authorized
 
 
@@ -199,20 +198,42 @@ def _execute_approved(
 @router.get("/status", dependencies=[Depends(require_admin)])
 def experiment_status(request: Request, db: Session = Depends(database_session)) -> dict:
     settings = request.app.state.settings
-    cli_ready = bool(
-        shutil.which("near") and settings.near_public_key
-        and NearCliKeychainTestnetSigner.configured_for_official_testnet()
-    )
+    if not settings.near_transactions_enabled:
+        keychain_status = "disabled"
+    elif settings.near_testnet_private_key:
+        keychain_status = "configured"
+    elif settings.near_testnet_rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
+        keychain_status = "not configured"
+    else:
+        keychain_status = NearCliKeychainTestnetSigner.keychain_status(
+            settings.near_sender_account, settings.near_public_key
+        )
+    request.app.state.near_keychain_verification = (
+        settings.near_sender_account,
+        settings.near_public_key,
+        keychain_status,
+        time.monotonic(),
+    ) if keychain_status not in ("disabled", "configured") else None
+    keychain_ready = keychain_status == "verified"
     configured_public_key = settings.near_public_key
-    if not configured_public_key and settings.near_testnet_private_key:
+    private_key_verified = False
+    if settings.near_testnet_private_key:
         try:
-            configured_public_key = derive_public_key(settings.near_testnet_private_key)
+            derived_public_key = derive_public_key(settings.near_testnet_private_key)
+            if not configured_public_key:
+                configured_public_key = derived_public_key
+            private_key_verified = configured_public_key == derived_public_key
         except NearSignerError:
-            configured_public_key = ""
+            private_key_verified = False
+            if not configured_public_key:
+                configured_public_key = ""
+    signer_verified = bool(keychain_ready or private_key_verified)
     status = {
-        "network": "testnet", "rpc_url": "https://rpc.testnet.near.org",
+        "network": "testnet", "rpc_url": OFFICIAL_NEAR_TESTNET_RPC_URL,
         "transactions_enabled": bool(settings.near_transactions_enabled),
-        "signer_configured": bool(settings.near_testnet_private_key or cli_ready),
+        "signer_configured": bool(settings.near_testnet_private_key or keychain_ready),
+        "signer_status": keychain_status,
+        "signer_verified": signer_verified,
         "sender_account": settings.near_sender_account or None,
         "public_wallet_address": settings.near_sender_account or None,
         "account_explorer_url": f"https://explorer.testnet.near.org/accounts/{settings.near_sender_account}" if settings.near_sender_account else None,
@@ -241,8 +262,8 @@ def experiment_status(request: Request, db: Session = Depends(database_session))
             if configured_public_key:
                 match = next((key for key in access_keys if key["public_key"] == configured_public_key), None)
                 status["signer_permission_status"] = "verified_full_access" if match and match["permission"] == "FullAccess" else "not_authorized"
-            elif cli_ready:
-                status["signer_permission_status"] = "public_key_required_for_keychain_match"
+            elif keychain_status == "configured but not verified":
+                status["signer_permission_status"] = "keychain_configured_but_not_verified"
             else:
                 full_access = next((key for key in access_keys if key["permission"] == "FullAccess"), None)
                 if full_access:
@@ -253,14 +274,14 @@ def experiment_status(request: Request, db: Session = Depends(database_session))
             status["recipient_verified"] = True
         status["transaction_ready"] = bool(
             settings.near_transactions_enabled
-            and (settings.near_testnet_private_key or cli_ready)
+            and signer_verified
             and settings.near_sender_account.endswith(".testnet")
             and settings.near_authorized_recipient.endswith(".testnet")
             and settings.near_unauthorized_recipient.endswith(".testnet")
             and status["signer_permission_status"] == "verified_full_access"
             and status["sender_balance_near"] is not None
             and status["recipient_verified"]
-            and settings.near_testnet_rpc_url == "https://rpc.testnet.near.org"
+            and settings.near_testnet_rpc_url == OFFICIAL_NEAR_TESTNET_RPC_URL
         )
     except NearIntegrationError:
         status["rpc_status"] = "unavailable"

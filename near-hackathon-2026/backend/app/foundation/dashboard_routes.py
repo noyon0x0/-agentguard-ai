@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shutil
+import time
 from datetime import timezone
 
 from fastapi import APIRouter, Depends, Request
@@ -9,6 +11,8 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from .models import AgentState, AuditEvent, PolicyConfiguration, SecurityEvaluation
+from .config import OFFICIAL_NEAR_TESTNET_RPC_URL
+from .near_signer import NearCliKeychainTestnetSigner, NearSignerError, derive_public_key
 from .routes import database_session
 from .security_engine import PROMPT_ATTACK_PATTERNS, ensure_default_policy
 from .telegram import telegram_configured
@@ -152,6 +156,46 @@ def telegram_status(request: Request) -> dict:
 @router.get("/settings", tags=["settings"])
 def system_settings(request: Request) -> dict:
     settings = request.app.state.settings
+    if not settings.near_transactions_enabled:
+        signer_status = "disabled"
+    elif settings.near_testnet_private_key:
+        signer_status = "configured"
+    elif settings.near_testnet_rpc_url != OFFICIAL_NEAR_TESTNET_RPC_URL:
+        signer_status = "not configured"
+    else:
+        cached = getattr(request.app.state, "near_keychain_verification", None)
+        cache_matches = bool(
+            cached
+            and cached[0] == settings.near_sender_account
+            and cached[1] == settings.near_public_key
+            and time.monotonic() - cached[3] <= 30
+        )
+        if cache_matches:
+            signer_status = cached[2]
+        elif (
+            settings.near_sender_account
+            and settings.near_public_key
+            and shutil.which("near")
+            and NearCliKeychainTestnetSigner.configured_for_official_testnet()
+        ):
+            signer_status = "configured but not verified"
+        else:
+            signer_status = "not configured"
+    official_rpc = settings.near_testnet_rpc_url == OFFICIAL_NEAR_TESTNET_RPC_URL
+    signer_verified = signer_status == "verified"
+    if settings.near_testnet_private_key:
+        try:
+            derived_public_key = derive_public_key(settings.near_testnet_private_key)
+        except NearSignerError:
+            derived_public_key = ""
+        signer_verified = bool(
+            derived_public_key
+            and (not settings.near_public_key or settings.near_public_key == derived_public_key)
+        )
+    signer_ready = signer_verified
+    transaction_signing_enabled = bool(
+        settings.near_transactions_enabled and official_rpc and signer_ready
+    )
     return {
         "app_name": settings.app_name,
         "environment": settings.environment,
@@ -161,8 +205,14 @@ def system_settings(request: Request) -> dict:
         "near_network_required": "testnet",
         "admin_auth_configured": bool(settings.admin_token),
         "telegram_configured": telegram_configured(settings),
-        "transaction_signing_enabled": bool(settings.near_transactions_enabled and settings.near_testnet_private_key),
-        "transaction_submission_enabled": bool(settings.near_transactions_enabled and settings.near_testnet_private_key),
+        "transaction_signer_status": signer_status,
+        "signer_verified": signer_verified,
+        "transaction_signing_enabled": transaction_signing_enabled,
+        # Full readiness requires live account, access-key, recipient, balance,
+        # policy, and approval checks. The public settings endpoint does not run
+        # that preflight, so it must not claim submission is enabled.
+        "transaction_submission_enabled": False,
+        "transaction_readiness_status": "requires live Testnet preflight",
     }
 
 

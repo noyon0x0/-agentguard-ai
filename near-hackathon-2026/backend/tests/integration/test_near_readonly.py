@@ -25,7 +25,7 @@ def rpc_result(result):
 
 def make_client():
     app = create_app(
-        Settings(database_url="sqlite://", log_level="CRITICAL", near_testnet_rpc_url="https://rpc.testnet.near.org")
+        Settings(database_url="sqlite://", log_level="CRITICAL", near_testnet_rpc_url="https://rpc.testnet.fastnear.com")
     )
     return app, TestClient(app, raise_server_exceptions=False)
 

@@ -139,7 +139,7 @@ def test_hackathon_dashboard_evaluation_smoke(dashboard_server):
                 "**/api/v1/near/experiment/status",
                 lambda route: route.fulfill(
                     status=200, content_type="application/json",
-                    body='{"network":"testnet","rpc_url":"https://rpc.testnet.near.org","transactions_enabled":false,"signer_configured":false,"signer_permission_status":"not_configured","transaction_ready":false,"sender_account":null,"authorized_recipient":null,"unauthorized_recipient":null,"max_transfer_near":"0.01","rpc_status":"healthy","sender_balance_near":null,"recipient_verified":false}',
+                    body='{"network":"testnet","rpc_url":"https://rpc.testnet.fastnear.com","transactions_enabled":false,"signer_configured":false,"signer_status":"disabled","signer_permission_status":"not_configured","transaction_ready":false,"sender_account":null,"authorized_recipient":null,"unauthorized_recipient":null,"max_transfer_near":"0.01","rpc_status":"healthy","sender_balance_near":null,"recipient_verified":false}',
                 ),
             )
             page.route(

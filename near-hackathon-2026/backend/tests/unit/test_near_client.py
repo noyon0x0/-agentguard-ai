@@ -10,10 +10,10 @@ from app.foundation.near_client import (
 
 
 def test_near_rpc_settings_are_environment_configurable(monkeypatch):
-    monkeypatch.setenv("NEAR_HACKATHON_AGENTGUARD_NEAR_TESTNET_RPC_URL", "https://rpc.example.test")
+    monkeypatch.setenv("NEAR_HACKATHON_AGENTGUARD_NEAR_TESTNET_RPC_URL", "https://rpc.testnet.fastnear.com")
     monkeypatch.setenv("NEAR_HACKATHON_AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS", "2.5")
     settings = Settings.from_environment()
-    assert settings.near_testnet_rpc_url == "https://rpc.example.test"
+    assert settings.near_testnet_rpc_url == "https://rpc.testnet.fastnear.com"
     assert settings.near_rpc_timeout_seconds == 2.5
 
 
@@ -31,13 +31,24 @@ def test_testnet_transaction_settings_are_backend_environment_only(monkeypatch):
     assert settings.near_testnet_private_key == "ed25519:test-only"
 
 
-def test_client_rejects_non_https_public_rpc_urls():
-    try:
-        NearTestnetClient("http://rpc.example.test")
-    except ValueError as exc:
-        assert "HTTPS" in str(exc)
-    else:
-        raise AssertionError("non-HTTPS public RPC URL was accepted")
+def test_client_rejects_noncanonical_rpc_urls():
+    for rpc_url in (
+        "http://rpc.testnet.fastnear.com",
+        "https://archival-rpc.testnet.fastnear.com",
+        "https://rpc.testnet.fastnear.com:8443",
+        "https://rpc.testnet.fastnear.com/proxy",
+        "https://user@rpc.testnet.fastnear.com",
+        "https://rpc.testnet.fastnear.com?query=1",
+        "https://rpc.testnet.fastnear.com#fragment",
+        "https://rpc.testnet.near.org",
+        "https://near.org",
+    ):
+        try:
+            NearTestnetClient(rpc_url)
+        except ValueError as exc:
+            assert "exactly match" in str(exc)
+        else:
+            raise AssertionError(f"unexpected NEAR RPC URL was accepted: {rpc_url}")
 
 
 def test_rpc_client_refuses_broadcast_methods_without_network_access(monkeypatch):
@@ -46,7 +57,7 @@ def test_rpc_client_refuses_broadcast_methods_without_network_access(monkeypatch
         "app.foundation.near_client.requests.post",
         lambda *args, **kwargs: calls.append(kwargs),
     )
-    client = NearTestnetClient("https://rpc.testnet.near.org")
+    client = NearTestnetClient("https://rpc.testnet.fastnear.com")
 
     assert READ_ONLY_METHODS == frozenset({"status", "query", "tx"})
     try:
@@ -80,7 +91,7 @@ def test_read_only_client_requests_need_no_wallet_credentials(monkeypatch):
         return Response()
 
     monkeypatch.setattr("app.foundation.near_client.requests.post", fake_post)
-    client = NearTestnetClient("https://rpc.testnet.near.org")
+    client = NearTestnetClient("https://rpc.testnet.fastnear.com")
     client.get_account("alice.testnet")
 
     assert [call["json"]["method"] for call in seen] == ["status", "query"]

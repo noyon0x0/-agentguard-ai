@@ -7,7 +7,7 @@ def test_hackathon_defaults_are_testnet_only_and_do_not_reuse_parent_wallet():
     settings = Settings()
     project_root = Path(__file__).resolve().parents[3]
 
-    assert settings.near_testnet_rpc_url == "https://rpc.testnet.near.org"
+    assert settings.near_testnet_rpc_url == "https://rpc.testnet.fastnear.com"
     assert settings.near_sender_account == ""
     assert settings.near_public_key == ""
     assert settings.near_testnet_private_key == ""
