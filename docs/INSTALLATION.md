@@ -62,6 +62,12 @@ This binds to loopback. Keep it that way for the demo. The v4 dashboard is at `h
 | `AGENTGUARD_ADMIN_TOKEN` | `agentguard-local-demo-token` | Bearer token for operator actions. Override it with a unique secret outside local demos. |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | HTTPS Testnet JSON-RPC URL; HTTP is accepted only for localhost. |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | Must be from 0.1 to 60 seconds. |
+| `AGENTGUARD_NEAR_SENDER_ACCOUNT` | Provisioned AgentGuard Testnet account | Account ID to monitor and use as the isolated sender. |
+| `AGENTGUARD_NEAR_PUBLIC_KEY` | Provisioned AgentGuard public key | Public key only; used to match the active on-chain FullAccess permission. |
+| `AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT` | `merchant.testnet` | Exact recipient allowed by the live Testnet experiment; verified against current Testnet RPC during setup. |
+| `AGENTGUARD_NEAR_UNAUTHORIZED_RECIPIENT` | `attacker.testnet` | `.testnet` account ID used only by non-broadcasting security checks. |
+| `AGENTGUARD_NEAR_TRANSACTIONS_ENABLED` | `false` | Must be explicitly set to `true` to enable the experiment signer. |
+| `AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY` | unset | Compatibility fallback only. Prefer the near-cli-rs OS-keychain signer; never place a key in the repository, frontend, or agent prompt. |
 | `AGENTGUARD_TELEGRAM_BOT_TOKEN` | unset | Optional server-only Telegram bot token. |
 | `AGENTGUARD_TELEGRAM_CHAT_ID` | unset | Optional destination chat; alerts remain disabled unless both Telegram settings are configured. |
 
@@ -79,3 +85,107 @@ The settings endpoint never returns the RPC URL or admin token. The default toke
 ## Stop
 
 Stop the Uvicorn process with `Ctrl+C`. The shared demo token set in that shell ends with the shell session. The SQLite database remains on disk; preserve or remove it according to your local demo-data needs.
+
+## Optional controlled NEAR Testnet transaction experiment
+
+Transaction submission is disabled unless explicitly enabled. The backend requires the official Testnet RPC, three `.testnet` account IDs, a near-cli-rs OS-keychain signer, a matching active FullAccess public key, and a disposable sender account. Native NEAR transfers cannot be signed with a FunctionCall access key. No private key is accepted by an API request or returned to the dashboard. Transfers are capped at 0.01 NEAR and preflight requires a 0.1 NEAR balance reserve for gas.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `AGENTGUARD_NEAR_TRANSACTIONS_ENABLED` | `false` | Explicit opt-in to the live Testnet transfer endpoint. |
+| `AGENTGUARD_NEAR_SENDER_ACCOUNT` | Provisioned AgentGuard Testnet account | Dedicated sender account ending in `.testnet`. |
+| `AGENTGUARD_NEAR_PUBLIC_KEY` | Provisioned AgentGuard Testnet public key | Public key checked against an active FullAccess key. |
+| `AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT` | `merchant.testnet` | Exact account allowed for actual transfer, ending in `.testnet`. |
+| `AGENTGUARD_NEAR_UNAUTHORIZED_RECIPIENT` | `attacker.testnet` | Testnet recipient ID used by the unauthorized-recipient attack scenario. |
+| `AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY` | unset | Legacy compatibility fallback. Use the near-cli-rs OS keychain by default. |
+| `AGENTGUARD_RUN_LIVE_NEAR_TEST` | unset | Separate test opt-in; submits one real 0.01 NEAR Testnet transfer. |
+
+Use a private shell session, configure these values only after obtaining a Testnet account/key and faucet funds, then restart the backend. Verify `/v4/api/v1/near/experiment/status` with admin authentication before sending. A Testnet transfer spends Testnet tokens; the live pytest is skipped unless explicitly opted in. No live transfer was performed during this implementation.
+
+### Dedicated account provisioning with near-cli-rs
+
+The project uses NEAR Testnet only. Check whether `near-cli-rs` is available:
+
+```powershell
+Get-Command near -ErrorAction SilentlyContinue
+near --version
+```
+
+If it is missing, install from the official NEAR release page. The official
+PowerShell installer command for the current release is listed on
+[near/near-cli-rs Releases](https://github.com/near/near-cli-rs/releases):
+
+```powershell
+irm https://github.com/near/near-cli-rs/releases/latest/download/near-cli-rs-installer.ps1 | iex
+```
+
+Restart PowerShell, then verify `near --version`. You can also download the
+Windows MSI from that release page and verify its published SHA-256 checksum
+before installing.
+
+Generate a fresh, unique-looking account ID locally, check it through the RPC,
+then create it with the Testnet faucet sponsor. `near-cli-rs` generates the
+keypair itself and saves the key in the local OS keychain; the command does
+not export the key to the terminal:
+
+```powershell
+$suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
+$account = "agentguard-v4-$suffix.testnet"
+near account create-account sponsor-by-faucet-service $account autogenerate-new-keypair save-to-keychain network-config testnet create
+```
+
+The faucet may rate-limit or require an interactive step. Stop and complete
+any CAPTCHA, browser authorization, or approval yourself; do not automate or
+bypass it. After CLI success, verify the account and balance from the official
+RPC and use a keychain-only public-key lookup:
+
+```powershell
+near account view-account-summary $account network-config testnet now
+near account get-public-key from-keychain $account network-config testnet
+```
+
+These commands display public account information. Do not run an export
+command that prints a private key or recovery phrase to a shared, recorded, or
+AI-visible terminal.
+
+Configure a separate CLI connection for AgentGuard so signing uses the exact
+official RPC endpoint. The CLI asks whether the endpoint requires an API key;
+for `https://rpc.testnet.near.org`, select **No**. If you do not approve this
+configuration prompt, leave the live signer disabled:
+
+```powershell
+near config add-connection --network-name testnet --connection-name agentguard-testnet --rpc-url https://rpc.testnet.near.org/ --wallet-url https://wallet.testnet.near.org/ --explorer-transaction-url https://explorer.testnet.near.org/transactions/ --linkdrop-account-id testnet --faucet-url https://helper.nearprotocol.com/account
+near config show-connections
+```
+
+Verify that the `agentguard-testnet` connection has `network_name = "testnet"`
+and `rpc_url = "https://rpc.testnet.near.org/"`. The app's defaults expose the
+provisioned public account and public key; override them with
+`AGENTGUARD_NEAR_SENDER_ACCOUNT` and `AGENTGUARD_NEAR_PUBLIC_KEY` when using a
+different wallet. Keep transactions disabled until an authorized recipient,
+an unauthorized demo recipient, and the correct public key are configured.
+
+The dashboard reports balance only after a current RPC account query. The
+account RPC cannot prove which party funded the balance, so it labels the
+balance as RPC-confirmed and does not claim faucet provenance. Faucet-sponsored
+account creation is confirmed separately by the CLI result and account
+existence check.
+
+### Recovery backup
+
+The live signer reads the key from the OS keychain through near-cli-rs. Keep
+the computer account protected with disk encryption and a strong login. For a
+recovery copy, use near-cli-rs's account export in a private, non-recorded
+local session and store the recovery phrase in an encrypted offline password
+manager or sealed offline backup. Never paste the phrase into this app, a
+terminal command argument, chat, issue, README, or source control. No recovery
+phrase was displayed or copied during provisioning here.
+
+### Explicit transaction confirmation
+
+The initial Testnet payment request only evaluates policy. ALLOW and approved
+WARN responses both wait. The operator must separately confirm the exact
+sender, recipient, amount, and Testnet network in the dashboard; the backend
+confirmation endpoint enforces this step before accessing the signer. BLOCK
+never invokes the signer. A final success is displayed only after the RPC
+verifies final execution status.

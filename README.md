@@ -1,25 +1,25 @@
-# AgentGuard AI v4
+﻿# AgentGuard AI v4
 
-**A NEAR Testnet read-only security prototype for evaluating agent payment requests.**
+**A NEAR Testnet security prototype with an explicitly gated 0.01 NEAR transfer experiment.**
 
-AgentGuard AI demonstrates policy controls around payment requests from
-software agents. The backend evaluates each request, records its decision in
-SQLite, and routes higher-risk requests to authenticated human review. The v4
-foundation app does not hold wallet keys or execute transactions.
+AgentGuard AI evaluates agent payment requests, records decisions in SQLite,
+and routes higher-risk requests to authenticated human review. Normal policy
+evaluation remains non-executing. A separate admin-only experiment can send
+at most 0.01 NEAR on Testnet when explicitly enabled and configured with a
+dedicated disposable account and a backend-only key.
 
 ## Problem and approach
 
 Autonomous agents can generate payment requests faster than a human can review
-them. This prototype places explicit server-side controls between a request
-and any hypothetical payment executor: recipient allowlists, spending limits,
+them. Server-side controls include recipient allowlists, spending limits,
 duplicate and velocity checks, prompt-pattern checks, a kill switch, and human
-review. There is no payment executor in this project.
+review. Only the isolated Testnet experiment adapter can reach the signer.
 
-The word “AI” in the project name does not mean a model decides whether a
+The word â€œAIâ€ in the project name does not mean a model decides whether a
 request passes. Security decisions use deterministic backend rules; model
 inference is not a policy input in this implementation.
 
-AgentGuard AI records explainable `APPROVE`, `REVIEW`, and `BLOCK` decisions using deterministic server-side rules. It does not sign, authorize, or submit blockchain transactions. It does not use an AI model to make security decisions.
+AgentGuard AI records explainable `APPROVE`, `REVIEW`, and `BLOCK` decisions using deterministic server-side rules. Ordinary evaluations never sign or submit. The separately configured Testnet experiment maps these outcomes to `ALLOW`, `WARN`, or `BLOCK` and verifies final status after submission. Security decisions do not use model output.
 
 The v4 dashboard is served by `app.main_v3:app` at `/dashboard-v4` on port 8000. Its foundation API is mounted at `/v4/api/v1`; existing v3 API routes remain available at their original paths. Earlier dashboard files remain in the repository.
 
@@ -29,8 +29,8 @@ The v4 dashboard is served by `app.main_v3:app` at `/dashboard-v4` on port 8000.
 
 | Status | Features |
 | --- | --- |
-| **Implemented** | FastAPI foundation; deterministic server policy; validation, SQLite persistence, evaluation idempotency, agent freeze, global kill switch, policy revisions, protected human approvals, correlated request IDs, persisted simulations, sanitized public activity, linked SHA-256 audit events with verification/export, optional server-side Telegram alerts, and read-only NEAR client. |
-| **Tested** | The complete suite passed **70 tests with 1 existing warning** on 2026-11-13; browser and API evidence is recorded below and in `docs/TESTING.md`. |
+| **Implemented** | FastAPI foundation; deterministic policy; SQLite persistence; idempotency, limits, recipient allowlists, approvals and audit chain; read-only NEAR monitoring; explicitly gated Testnet transfer endpoint with a 0.01 NEAR cap, OS-keychain-backed near-cli-rs signer, explicit pre-broadcast confirmation, preflight checks, final status verification, and transaction audit history; simulated and Testnet attack checks. |
+| **Tested** | The complete suite passed **96 tests, 1 live transaction test skipped, and 1 existing warning** on 2026-11-14, including the browser smoke test. |
 | **Mocked** | Automated NEAR RPC tests use mocked provider replies. Simulations use generated requests but execute the real local policy engine. Telegram delivery tests must mock the provider; no real delivery is implied. |
 | **Unverified** | Continued NEAR RPC availability beyond the point-in-time checks below, actual Telegram delivery, cross-browser/mobile/accessibility review, deployment security, and multi-process consistency. |
 | **Planned / limited** | A SHA-256 chain detects edits but SQLite remains operator-editable; no external immutable anchor/signature exists. Authentication is one shared bearer token, migrations are additive rather than managed by Alembic, and public threat intelligence is not connected. |
@@ -49,6 +49,9 @@ See [Architecture](docs/ARCHITECTURE.md), [Threat Model](docs/THREAT_MODEL.md), 
   public activity views.
 - Read-only NEAR Testnet status and account monitoring. RPC availability can
   change independently of the application.
+- Read-only Testnet access-key permission inspection. The system does not
+  return private keys to the frontend or agent. Live transfer uses the
+  isolated backend key only when the Testnet feature flag is enabled.
 
 ## Installation and configuration
 
@@ -100,6 +103,12 @@ The database defaults to `backend/agentguard_foundation.db`, independent of the 
 | `AGENTGUARD_DATABASE_URL` | `backend/agentguard_foundation.db` | SQLite storage location; relative override paths resolve from the process working directory. |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | HTTPS NEAR RPC endpoint; client rejects non-Testnet chain IDs. |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | RPC request timeout, from 0.1 to 60 seconds. |
+| `AGENTGUARD_NEAR_TRANSACTIONS_ENABLED` | `false` | Explicitly enables the isolated live Testnet transfer route. |
+| `AGENTGUARD_NEAR_SENDER_ACCOUNT` | provisioned AgentGuard Testnet account | Dedicated sender account; must end in `.testnet`. |
+| `AGENTGUARD_NEAR_PUBLIC_KEY` | provisioned AgentGuard Testnet public key | Public key used to match the account's active FullAccess key. |
+| `AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT` | `merchant.testnet` | Exact allowlisted Testnet payment destination; override as needed. |
+| `AGENTGUARD_NEAR_UNAUTHORIZED_RECIPIENT` | `attacker.testnet` | Test account used only for unauthorized-recipient attack checks. |
+| `AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY` | unset | Legacy backend-only fallback. Prefer near-cli-rs OS-keychain signing; never expose keys to the agent or browser. |
 | `AGENTGUARD_ENVIRONMENT` | `development` | Runtime environment label. |
 | `AGENTGUARD_LOG_LEVEL` | `INFO` | Structured log level. |
 
@@ -108,7 +117,7 @@ The local token is intended for loopback demos only. Keep Uvicorn bound to `127.
 ## Payment security workflow
 
 ```text
-Payment Request → Policy Evaluation → APPROVE / BLOCK / REVIEW → Human Approval (for REVIEW) → Audit Record
+Payment Request â†’ Policy Evaluation â†’ APPROVE / BLOCK / REVIEW â†’ Human Approval (for REVIEW) â†’ Audit Record
 ```
 
 1. **Payment request:** `POST /v4/api/v1/evaluations` validates the request and requires an `Idempotency-Key`. It accepts no private key, seed phrase, or signing material.
@@ -123,12 +132,12 @@ The request and review API details are in [API Reference](docs/API.md). No NEAR 
 
 ```text
 Browser dashboard
-  └─ FastAPI app: app.main_v3:app
-       ├─ existing v3 routes
-       └─ /v4 mount: foundation API
-            ├─ deterministic policy + human review
-            ├─ SQLite persistence + linked audit events
-            └─ read-only NEAR Testnet RPC client
+  â””â”€ FastAPI app: app.main_v3:app
+       â”œâ”€ existing v3 routes
+       â””â”€ /v4 mount: foundation API
+            â”œâ”€ deterministic policy + human review
+            â”œâ”€ SQLite persistence + linked audit events
+            â””â”€ read-only NEAR Testnet RPC client
 ```
 
 The combined app serves `/dashboard-v4` and mounts the v4 API at
@@ -149,7 +158,7 @@ python -m pip install -r backend\requirements.txt
 backend\.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir -q
 ```
 
-The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC responses; they do not broadcast transactions. The latest complete run on this revision was **70 passed, 1 warning** (`20.76s`, exit 0). The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
+The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC and signer responses; they do not broadcast a real transaction. The latest complete run on 2026-11-14 passed **96 tests, 1 live Testnet transaction test skipped, and 1 warning** (exit 0), including the browser smoke test. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
 
 ## Local demo
 
@@ -157,7 +166,7 @@ The browser smoke test requires Playwright and Microsoft Edge; install `backend/
 2. Enter the configured admin token under **System Settings** to load protected approvals, audit, and simulation views.
 3. Submit a small request to `treasury.testnet` and observe the server decision and updated counts.
 4. Submit a request above the review threshold, then approve or reject it in Human Approval Center. The approval is revalidated and does not execute a payment.
-5. Submit a request to `attacker.testnet` to demonstrate the blocklist, or use Simulation Lab to run all 12 backend scenarios.
+5. Submit a request to `attacker.testnet` to demonstrate the blocklist, or use Simulation Lab to run all 17 backend scenarios.
 6. Review the persisted Recent Activity. Enter the admin token to access full audit data, verify the audit hash chain, or export JSON/CSV.
 7. Optionally enable the global kill switch; it blocks all new v4 evaluations until an authenticated operator disables it.
 8. Check the NEAR monitor separately. It reports current RPC results when available; mocked tests are not live-chain evidence. Telegram stays disabled unless both server environment settings are configured.
@@ -176,11 +185,11 @@ contains no credentials.
 
 ## NEAR integration boundary
 
-The NEAR client permits only read-only `status`, `query`, and `tx` status methods. It checks the RPC `chain_id` before account and transaction lookups. Account lookup uses finalized `view_account`; transaction lookup uses status at `FINAL`. The explorer URL is returned only after the RPC result’s hash and signer match the request. See the [NEAR RPC account documentation](https://docs.near.org/api/rpc/contracts) and [transaction status documentation](https://docs.near.org/api/rpc/transactions).
+The read-only NEAR client permits `status`, `query`, and `tx` methods for monitoring. The separate opt-in transaction adapter is pinned to the official Testnet RPC and uses near-cli-rs `sign-with-keychain` by default. It checks network, sender and recipient accounts, balance, matching public FullAccess key, policy, idempotency, and a 0.01 NEAR cap before signing. ALLOW and approved WARN results pause for a separate explicit broadcast confirmation. It verifies final status with the read-only client before returning success. See the [NEAR RPC account documentation](https://docs.near.org/api/rpc/contracts) and [transaction status documentation](https://docs.near.org/api/rpc/transactions).
 
 Point-in-time read-only evidence from 2026-11-13: `/v4/api/v1/near/health` returned HTTP 200 with `network=testnet` and 3813 ms latency; `/v4/api/v1/near/accounts/wrap.testnet` returned HTTP 200 with Testnet account metadata. These checks queried RPC status/account data only. No transaction was looked up, signed, or submitted, and RPC availability can change.
 
-There is no transaction signing, broadcasting, wallet connection, private-key handling, or automatic execution code in the v4 foundation app. An `APPROVE` is a policy decision only. The older v2/v3 demos also label approval as policy-only and no longer manufacture chain balances or explorer receipts. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
+Normal `APPROVE` evaluation is policy-only. A separately configured, admin-only Testnet experiment can submit a maximum 0.01 NEAR transfer through a backend-isolated keychain signer. It is disabled by default and requires a dedicated `.testnet` sender, an on-chain FullAccess public key, an explicitly configured authorized recipient, and a second explicit confirmation before submission. The older v2/v3 demos also label approval as policy-only and no longer manufacture chain balances or explorer receipts. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
 
 ## Screenshots
 
@@ -191,7 +200,7 @@ See [verified local screenshots](docs/screenshots/README.md). They were captured
 ## Exact next steps for submission
 
 1. On the final checkout, follow [Installation](docs/INSTALLATION.md) from a clean virtual environment and run the full suite using [Test Instructions](docs/TESTING.md).
-2. Start the app on loopback, check API health and OpenAPI docs, and run the 12-scenario suite through the authenticated Simulation Lab. Save the resulting actual scorecard and audit output for the demo.
+2. Start the app on loopback, check API health and OpenAPI docs, and run the 17-scenario suite through the authenticated Simulation Lab. Save the resulting actual scorecard and audit output for the demo.
 3. Recheck the Testnet RPC immediately before the presentation. If it remains unavailable, show the documented error state and identify the automated RPC checks as mocked.
 4. Fill in the team, repository, project category, demo link and event-specific form fields after confirming the current hackathon rules, deadline, and whether a demo video is required (including duration, format, and hosting requirements).
 5. Review the final Git diff, license and assets, README claims, screenshots, and [submission checklist](docs/SUBMISSION_CHECKLIST.md); submit only the revision that was reviewed.
@@ -203,10 +212,10 @@ MIT; see [LICENSE](LICENSE).
 ## Technology and contributions
 
 The project uses Python, FastAPI, Pydantic, SQLAlchemy, SQLite, HTML/CSS, and
-browser-side JavaScript. NEAR access uses public Testnet JSON-RPC read methods.
+browser-side JavaScript. NEAR read monitoring uses public JSON-RPC; the isolated signer submits only explicitly authorized Testnet transfers.
 Contributions are welcome through focused issues and pull requests; include
 relevant tests and documentation, keep credentials out of commits, and retain
-the execution-disabled and read-only boundaries. Contributions are under the
+the default-disabled Testnet execution boundary. Contributions are under the
 MIT License.
 
 ## Roadmap
@@ -217,3 +226,57 @@ MIT License.
 - Managed schema migration history and multi-process coordination before
   considering deployment beyond a single-process demo.
 - A verified public demo video and event-specific submission details.
+
+## Attack demonstrations
+
+With the API running and the admin bearer token configured, run all scenarios (no wallet or credentials are used):
+
+```powershell
+$headers = @{ Authorization = "Bearer $env:AGENTGUARD_ADMIN_TOKEN" }
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/v4/api/v1/simulation/run-all -Headers $headers
+```
+
+Five generated attacks cover an unlisted recipient, prompt injection, a per-request spending-limit bypass, duplicate replay, and an unauthorized contract/tool call. Each executes the actual policy engine, persists an `ATTACK_EXECUTION_EVIDENCE` audit event, and returns its checks and `signer_invoked` result. Blocked attacks must show `signer_invoked: false` and `broadcast: false`. These are backend simulations, not live Testnet attacks or evidence of real transaction signing.
+
+The NEAR monitor can also inspect finalized public access-key permissions at `GET /v4/api/v1/near/accounts/{account_id}/access-keys`. Transaction identity verification is separate from execution success; only finalized status results with a recognized success outcome report `execution_succeeded: true`.
+
+
+## Real Testnet transfer experiment
+
+The integration is disabled by default. Provision a disposable Testnet account with the official near-cli-rs faucet sponsor, which generates and saves the key to the local OS keychain. The app's signer delegates key retrieval and signing to `near ... sign-with-keychain`; it never loads the private key into the agent or frontend. The integration rejects RPC URLs other than `https://rpc.testnet.near.org`, requires `.testnet` account IDs, verifies the configured public key against an active full-access key, and caps each transfer at 0.01 NEAR plus a 0.1 NEAR minimum gas reserve.
+
+Check for near-cli-rs and install it from the [official releases](https://github.com/near/near-cli-rs/releases) if missing. Create an account without printing its generated key:
+
+```powershell
+$suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
+$account = "agentguard-v4-$suffix.testnet"
+near account create-account sponsor-by-faucet-service $account autogenerate-new-keypair save-to-keychain network-config testnet create
+near account view-account-summary $account network-config testnet now
+near account get-public-key from-keychain $account network-config testnet
+```
+
+The RPC balance query confirms the account exists and reports its current balance. Account RPC does not attest the funding source; the UI does not infer that a balance came from the faucet. See [Installation](docs/INSTALLATION.md) for safe recovery and CLI setup.
+
+Configure the official Testnet-only CLI connection:
+
+```powershell
+near config add-connection --network-name testnet --connection-name agentguard-testnet --rpc-url https://rpc.testnet.near.org/ --wallet-url https://wallet.testnet.near.org/ --explorer-transaction-url https://explorer.testnet.near.org/transactions/ --linkdrop-account-id testnet --faucet-url https://helper.nearprotocol.com/account
+```
+
+If the CLI asks whether this endpoint needs an API key, select **No**. The app verifies this profile's network and RPC URL before enabling the CLI signer.
+
+Set these public configuration values and recipient IDs in the backend environment before starting Uvicorn:
+
+```powershell
+$env:AGENTGUARD_NEAR_TRANSACTIONS_ENABLED = 'true'
+$env:AGENTGUARD_NEAR_SENDER_ACCOUNT = 'your-isolated-sender.testnet'
+$env:AGENTGUARD_NEAR_PUBLIC_KEY = 'ed25519:PUBLIC_KEY_FROM_NEAR_CLI'
+$env:AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT = 'your-authorized-recipient.testnet'
+$env:AGENTGUARD_NEAR_UNAUTHORIZED_RECIPIENT = 'your-attack-recipient.testnet'
+```
+
+Start the server on loopback and verify account balance, public key, Testnet status, and recipient permission in the dashboard. An initial ALLOW has no signer invocation; WARN requires explicit admin approval, and both require a second explicit broadcast confirmation. A successful result appears only after final RPC verification. No live payment is broadcast by running the UI checks or default automated test suite.
+
+Run the no-transfer attack demonstrations from the experiment panel, or call the protected `/v4/api/v1/near/experiment/attacks/{unauthorized-recipient|prompt-injection|spending-limit|duplicate-replay}` endpoints. The separate live test is skipped by default. To intentionally submit one 0.01 NEAR transfer as a live test, configure the variables above and set `AGENTGUARD_RUN_LIVE_NEAR_TEST=true` before running `backend\.venv\Scripts\python.exe -m pytest backend\tests\live\test_near_testnet_live_transfer.py -q`. This spends Testnet funds and must be run only against a disposable test account.
+
+The Testnet account was created during setup and its 10 NEAR balance was confirmed via RPC. No payment transfer was broadcast. Do not present mocked transaction hashes from automated tests as on-chain evidence.

@@ -15,7 +15,7 @@
 - [ ] Set a new admin token outside the repository.
 - [ ] Start the app bound to loopback unless a reviewed deployment environment is used.
 - [ ] Confirm `/v4/api/v1/health`, `/v4/docs`, `/dashboard-v4`, and `/v4/api/v1/near/health`.
-- [ ] Run all 12 simulations and capture the API scorecard result.
+- [ ] Run all 17 simulations and capture the API scorecard result.
 - [ ] Confirm audit events are visible in the configured database.
 - [ ] Confirm Telegram is described as not configured.
 - [ ] Do not present `APPROVE` as a signed authorization or on-chain transfer.
@@ -23,10 +23,10 @@
 ## Security and accuracy
 
 - [x] No private keys or wallet credentials in source or demo flow.
-- [x] No signing or transaction submission method in the v4 foundation app.
+- [x] Signing and transaction submission are isolated in the opt-in Testnet experiment; ordinary evaluation remains non-executing.
 - [x] NEAR responses fail closed on wrong network, timeout, malformed response, or RPC error.
 - [x] Claims separate automated mocked RPC tests from point-in-time live RPC checks.
-- [x] Re-run the complete test suite on the final pre-commit source: 70 passed, 1 existing deprecation warning.
+- [x] Re-run the complete test suite on the final pre-commit source: 96 passed, 1 opt-in live Testnet transaction test skipped, and 1 existing deprecation warning.
 - [ ] Review `docs/LIMITATIONS.md` before making security claims.
 - [x] Review the intended Git diff and exclude local SQLite databases, tokens, and temporary artifacts from the staged submission.
 

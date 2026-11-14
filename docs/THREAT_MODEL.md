@@ -2,7 +2,7 @@
 
 ## Scope
 
-This model covers the v4 dashboard, FastAPI foundation, deterministic transaction policy checks, local SQLite state, protected operator routes, and read-only NEAR Testnet client. It does not cover wallet signing or transaction submission because those are not implemented in the foundation app.
+This model covers the v4 dashboard, FastAPI foundation, deterministic transaction policy checks, local SQLite state, protected operator routes, read-only NEAR monitoring, and the explicitly disabled-by-default Testnet experiment. The preferred signer uses near-cli-rs to access a dedicated test account key in the OS keychain and can submit at most 0.01 NEAR after policy, preflight, and separate explicit operator confirmation.
 
 ## Assets
 
@@ -43,8 +43,8 @@ This model covers the v4 dashboard, FastAPI foundation, deterministic transactio
 - The process and SQLite file are controlled by the local operator.
 - Admin token is configured and kept out of source control and screenshots.
 - The browser reaches the API over loopback for the demo.
-- A `BLOCK`, `REVIEW`, or `APPROVE` is an application policy result only. No blockchain action follows.
+- A `BLOCK`, `REVIEW`, or `APPROVE` is an application policy result only. It cannot submit unless the operator separately confirms the exact Testnet transaction.
 
 ## Out of scope
 
-Signing keys, wallet providers, account authorization, transaction broadcast, smart-contract execution, production threat intelligence, Telegram message delivery, multi-tenant identity, and production availability guarantees.
+Mainnet custody or transactions, smart-contract execution, production key management, production threat intelligence, Telegram message delivery, multi-tenant identity, and production availability guarantees. The only live execution path is the opt-in Testnet native transfer boundary described above.

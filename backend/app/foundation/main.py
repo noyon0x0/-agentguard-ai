@@ -22,6 +22,7 @@ from .migrations import upgrade_schema
 from .models import Base
 from .near_client import NearTestnetClient
 from .near_routes import create_near_router
+from .near_experiment import router as near_experiment_router
 from .routes import router
 from .security_engine import ensure_default_policy
 from .simulation_lab import router as simulation_router
@@ -50,8 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title=config.app_name,
         description=(
-            "AgentGuard backend foundation. Evaluation intake is persisted, "
-            "but transaction signing and execution are disabled."
+            "AgentGuard backend foundation. Normal evaluation intake never signs or executes. "
+            "A separate admin-protected Testnet experiment is disabled unless explicitly configured."
         ),
         version="0.1.0",
         docs_url="/docs",
@@ -86,6 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dashboard_router)
     app.include_router(simulation_router)
     app.include_router(create_near_router(near_client))
+    app.include_router(near_experiment_router)
 
     dashboard_file = Path(__file__).resolve().parents[3] / "frontend" / "dashboard_v4.html"
 

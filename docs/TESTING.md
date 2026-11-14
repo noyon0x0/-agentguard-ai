@@ -40,4 +40,12 @@ Separate point-in-time read-only check on 2026-11-13: `/v4/api/v1/near/health` r
 
 ## Not covered by automated tests
 
-Automated tests do not sign or submit transactions; do not prove the soundness of regex injection detection; do not conduct load, penetration, or full assistive-technology testing; and do not establish the availability or correctness of third-party RPC providers. NEAR RPC integration tests are mocked. Live RPC availability must be verified separately; the configured proxy may prevent requests. No live transaction lookup is required or performed by the test suite.
+Automated tests exercise the transaction boundary with mocked signer/RPC responses and never broadcast a real transaction. They do not prove the soundness of regex injection detection; conduct load, penetration, or full assistive-technology testing; or establish third-party RPC availability/correctness. The explicitly enabled live Testnet test is skipped by default.
+
+## AgentGuard v4 integration upgrade (2026-11-14)
+
+The pinned `py-near==1.2.22` compatibility dependency installed successfully and `pip check` reported no broken requirements. The preferred transaction signer uses near-cli-rs OS-keychain credentials. The suite includes the optional Edge/Playwright dashboard smoke test and temporary-database tests. New coverage exercises mocked Testnet transfers, Testnet-only signer configuration, signer key-to-access-key matching, all four no-broadcast Testnet attack scenarios, WARN approval, the separate explicit-confirmation boundary, final status failure, and persisted audit evidence.
+
+Final complete suite after the keychain signer, explicit confirmation boundary, and dashboard account panel changes: `96 passed, 1 skipped, 1 warning in 20.02s`, exit code 0. The skipped case is the opt-in live Testnet transfer test. The warning is Starlette's existing `TestClient`/httpx deprecation. No payment transaction was submitted; the live transfer test remains opt-in and skipped by default.
+
+Live read-only verification on 2026-11-14: official RPC `https://rpc.testnet.near.org` returned `chain_id=testnet`; the dashboard-facing status API returned HTTP 200, account and authorized recipient verified, `10 NEAR` balance, and the configured public key matched an active FullAccess permission. The account was created using the faucet-sponsored near-cli-rs flow and its generated key was retrieved only as a public key from the OS keychain. No live payment transaction was signed or broadcast. The custom CLI RPC connection remains pending operator selection at the CLI's API-key prompt; therefore the signer is not ready and live transfers remain disabled.

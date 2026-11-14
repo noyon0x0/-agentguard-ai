@@ -75,6 +75,23 @@ def validate_transaction_hash(tx_hash: str) -> str:
     return tx_hash
 
 
+def verify_function_call_permission(permission: object, contract_id: str, method_name: str) -> bool:
+    """Check a public access-key permission against one intended function call."""
+    try:
+        contract_id = validate_account_id(contract_id)
+    except NearInvalidInput:
+        return False
+    if not isinstance(method_name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", method_name):
+        return False
+    if not isinstance(permission, dict) or set(permission) != {"FunctionCall"}:
+        return False
+    scope = permission.get("FunctionCall")
+    if not isinstance(scope, dict) or scope.get("receiver_id") != contract_id:
+        return False
+    allowed_methods = scope.get("method_names")
+    return isinstance(allowed_methods, list) and (not allowed_methods or method_name in allowed_methods)
+
+
 class NearTestnetClient:
     """Permit only status and state/status queries; never accepts signing data."""
 
@@ -201,6 +218,27 @@ class NearTestnetClient:
             "is_contract": code_hash != EMPTY_CODE_HASH,
         }
 
+    def get_access_keys(self, account_id: str) -> dict:
+        """Inspect public access-key permissions; no key material is returned."""
+        account_id = validate_account_id(account_id)
+        self._verify_network_before_query()
+        result = self._rpc_call(
+            "query",
+            {"request_type": "view_access_key_list", "finality": "final", "account_id": account_id},
+        )
+        raw_keys = result.get("keys")
+        if not isinstance(raw_keys, list):
+            raise NearRpcUnavailable("NEAR access-key response was incomplete")
+        keys = []
+        for item in raw_keys:
+            if not isinstance(item, dict) or not isinstance(item.get("public_key"), str):
+                raise NearRpcUnavailable("NEAR access-key response was incomplete")
+            permission = item.get("access_key", {}).get("permission") if isinstance(item.get("access_key"), dict) else None
+            if not isinstance(permission, (dict, str)):
+                raise NearRpcUnavailable("NEAR access-key permission response was incomplete")
+            keys.append({"public_key": item["public_key"], "permission": permission})
+        return {"account_id": account_id, "network": "testnet", "verified": True, "keys": keys}
+
     def get_transaction(self, tx_hash: str, sender_account_id: str) -> dict:
         tx_hash = validate_transaction_hash(tx_hash)
         sender_account_id = validate_account_id(sender_account_id)
@@ -218,6 +256,7 @@ class NearTestnetClient:
             raise NearRpcUnavailable("NEAR RPC transaction result was incomplete")
         return {
             "verified": True,
+            "execution_succeeded": any(key in result["status"] for key in ("SuccessValue", "SuccessReceiptId")),
             "network": "testnet",
             "transaction_hash": tx_hash,
             "sender_account_id": sender_account_id,

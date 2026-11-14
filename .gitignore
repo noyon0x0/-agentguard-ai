@@ -152,6 +152,8 @@ activemq-data/
 # Environments
 .env
 .envrc
+.near-credentials/
+.near-cli/
 .venv
 env/
 venv/
@@ -221,3 +223,6 @@ __marimo__/
 *.before-*
 backups/
 *.db
+*.key
+*.seed
+*.mnemonic

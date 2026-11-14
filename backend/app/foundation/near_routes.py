@@ -16,6 +16,7 @@ from .near_client import (
 )
 from .schemas import (
     NearAccountResponse,
+    NearAccessKeysResponse,
     NearContractResponse,
     NearHealthResponse,
     NearTransactionResponse,
@@ -71,6 +72,19 @@ def create_near_router(client: NearTestnetClient) -> APIRouter:
             "is_contract": account["is_contract"],
             "code_hash": account["code_hash"],
         }
+
+    @router.get("/accounts/{account_id}/access-keys", response_model=NearAccessKeysResponse)
+    def access_keys(account_id: str, near: NearTestnetClient = Depends(get_client)) -> dict:
+        try:
+            return near.get_access_keys(account_id)
+        except NearInvalidInput as exc:
+            raise HTTPException(status_code=422, detail={"code": "INVALID_NEAR_ACCOUNT_ID"}) from exc
+        except NearAccountNotFound as exc:
+            raise HTTPException(status_code=404, detail={"code": "NEAR_ACCOUNT_NOT_FOUND"}) from exc
+        except NearWrongNetwork as exc:
+            raise HTTPException(status_code=503, detail={"code": "NEAR_WRONG_NETWORK"}) from exc
+        except NearRpcUnavailable as exc:
+            raise HTTPException(status_code=503, detail={"code": "NEAR_RPC_UNAVAILABLE"}) from exc
 
     @router.get("/transactions/{tx_hash}", response_model=NearTransactionResponse)
     def verify_transaction(

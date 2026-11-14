@@ -161,8 +161,8 @@ def system_settings(request: Request) -> dict:
         "near_network_required": "testnet",
         "admin_auth_configured": bool(settings.admin_token),
         "telegram_configured": telegram_configured(settings),
-        "transaction_signing_enabled": False,
-        "transaction_submission_enabled": False,
+        "transaction_signing_enabled": bool(settings.near_transactions_enabled and settings.near_testnet_private_key),
+        "transaction_submission_enabled": bool(settings.near_transactions_enabled and settings.near_testnet_private_key),
     }
 
 

@@ -145,6 +145,25 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                     body='{"status":"healthy","network":"testnet","latency_ms":1,"checked_at":"2026-01-01T00:00:00+00:00"}',
                 ),
             )
+            page.route(
+                "**/v4/api/v1/near/accounts/wrap.testnet/access-keys",
+                lambda route: route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body='{"account_id":"wrap.testnet","network":"testnet","verified":true,"keys":[{"public_key":"ed25519:public-only","permission":{"FunctionCall":{"receiver_id":"token.testnet","method_names":["ft_transfer"]}}}]}',
+                ),
+            )
+            page.route(
+                "**/v4/api/v1/near/experiment/status",
+                lambda route: route.fulfill(
+                    status=200, content_type="application/json",
+                    body='{"network":"testnet","rpc_url":"https://rpc.testnet.near.org","transactions_enabled":false,"signer_configured":false,"signer_permission_status":"not_configured","transaction_ready":false,"sender_account":null,"authorized_recipient":null,"unauthorized_recipient":null,"max_transfer_near":"0.01","rpc_status":"healthy","sender_balance_near":null,"recipient_verified":false}',
+                ),
+            )
+            page.route(
+                "**/v4/api/v1/near/experiment/history*",
+                lambda route: route.fulfill(status=200, content_type="application/json", body="[]"),
+            )
             page.on(
                 "request",
                 lambda request: admin_calls.append(
@@ -157,6 +176,8 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                         "/api/v1/audit",
                         "/api/v1/simulation/scenarios",
                         "/api/v1/simulation/scorecard",
+                        "/api/v1/near/experiment/status",
+                        "/api/v1/near/experiment/history",
                     )
                 )
                 else None,
@@ -187,6 +208,9 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                 "pending review requests from backend"
             ).wait_for(timeout=5000)
             page.locator("#simulation-state").get_by_text("backend-defined scenarios loaded").wait_for()
+            page.locator("#near-experiment-status").get_by_text("Network testnet").wait_for()
+            page.locator("#near-access-keys").click()
+            page.locator("#near-account-result").get_by_text("token.testnet methods: ft_transfer").wait_for()
 
             def submit(recipient: str, amount: str, memo: str) -> str:
                 page.locator("#recipient-id").fill(recipient)
@@ -232,6 +256,8 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                     "/api/v1/audit",
                     "/api/v1/simulation/scenarios",
                     "/api/v1/simulation/scorecard",
+                    "/api/v1/near/experiment/status",
+                    "/api/v1/near/experiment/history",
                 )
                 if endpoint in url
             }
@@ -240,6 +266,8 @@ def test_v4_dashboard_evaluation_smoke(dashboard_server):
                 "/api/v1/audit",
                 "/api/v1/simulation/scenarios",
                 "/api/v1/simulation/scorecard",
+                "/api/v1/near/experiment/status",
+                "/api/v1/near/experiment/history",
             }
         finally:
             browser.close()

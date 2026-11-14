@@ -5,6 +5,7 @@ from app.foundation.near_client import (
     READ_ONLY_METHODS,
     validate_account_id,
     validate_transaction_hash,
+    verify_function_call_permission,
 )
 
 
@@ -14,6 +15,20 @@ def test_near_rpc_settings_are_environment_configurable(monkeypatch):
     settings = Settings.from_environment()
     assert settings.near_testnet_rpc_url == "https://rpc.example.test"
     assert settings.near_rpc_timeout_seconds == 2.5
+
+
+def test_testnet_transaction_settings_are_backend_environment_only(monkeypatch):
+    monkeypatch.setenv("AGENTGUARD_NEAR_TRANSACTIONS_ENABLED", "true")
+    monkeypatch.setenv("AGENTGUARD_NEAR_SENDER_ACCOUNT", "sender.testnet")
+    monkeypatch.setenv("AGENTGUARD_NEAR_AUTHORIZED_RECIPIENT", "merchant.testnet")
+    monkeypatch.setenv("AGENTGUARD_NEAR_UNAUTHORIZED_RECIPIENT", "attacker.testnet")
+    monkeypatch.setenv("AGENTGUARD_NEAR_TESTNET_PRIVATE_KEY", "ed25519:test-only")
+    settings = Settings.from_environment()
+    assert settings.near_transactions_enabled is True
+    assert settings.near_sender_account == "sender.testnet"
+    assert settings.near_authorized_recipient == "merchant.testnet"
+    assert settings.near_unauthorized_recipient == "attacker.testnet"
+    assert settings.near_testnet_private_key == "ed25519:test-only"
 
 
 def test_client_rejects_non_https_public_rpc_urls():
@@ -89,3 +104,12 @@ def test_account_and_transaction_reference_validation():
         pass
     else:
         raise AssertionError("invalid transaction hash was accepted")
+
+
+def test_function_call_access_key_permission_requires_matching_scope_and_method():
+    scoped = {"FunctionCall": {"receiver_id": "token.testnet", "method_names": ["ft_transfer"]}}
+    assert verify_function_call_permission(scoped, "token.testnet", "ft_transfer") is True
+    assert verify_function_call_permission(scoped, "token.testnet", "ft_approve") is False
+    assert verify_function_call_permission(scoped, "other.testnet", "ft_transfer") is False
+    assert verify_function_call_permission("FullAccess", "token.testnet", "ft_transfer") is False
+    assert verify_function_call_permission({"FunctionCall": {"receiver_id": "token.testnet", "method_names": []}}, "token.testnet", "anything") is True

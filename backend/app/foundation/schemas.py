@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+from decimal import Decimal
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -172,10 +173,42 @@ class NearContractResponse(BaseModel):
     code_hash: str
 
 
+class NearAccessKeysResponse(BaseModel):
+    account_id: str
+    network: Literal["testnet"]
+    verified: Literal[True]
+    keys: list[dict[str, Any]]
+
+
 class NearTransactionResponse(BaseModel):
     verified: Literal[True]
+    execution_succeeded: bool
     network: Literal["testnet"]
     transaction_hash: str
     sender_account_id: str
     execution_status: dict[str, Any]
     explorer_url: str
+
+
+class NearTransferRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    recipient: str = Field(min_length=2, max_length=64)
+    amount_near: Decimal = Field(gt=0, max_digits=30, decimal_places=24)
+    agent_id: str = Field(default="agent.testnet", min_length=2, max_length=64)
+    prompt: str | None = Field(default=None, max_length=4000)
+    memo: str | None = Field(default=None, max_length=512)
+
+    @field_validator("recipient")
+    @classmethod
+    def validate_recipient_account(cls, value: str) -> str:
+        if not re.fullmatch(r"[a-z0-9]+(?:[._-][a-z0-9]+)*", value) or len(value) > 64:
+            raise ValueError("must be a valid lowercase NEAR account identifier")
+        return value
+
+    @field_validator("agent_id")
+    @classmethod
+    def validate_transfer_agent(cls, value: str) -> str:
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{1,63}", value):
+            raise ValueError("must be a valid agent identifier")
+        return value

@@ -39,19 +39,41 @@ def test_run_all_executes_real_engine_scenarios_and_records_scorecard():
         "unauthorized-tool-call",
         "invalid-contract",
         "expired-human-approval",
+        "unauthorized-recipient-payment",
+        "prompt-injection-payment-override",
+        "spending-limit-bypass",
+        "duplicate-payment-replay",
+        "unauthorized-contract-method",
     }
     assert {item["scenario"] for item in results} == expected_names
-    assert len({item["test_id"] for item in results}) == 12
+    assert len({item["test_id"] for item in results}) == 17
     assert all(item["expected_decision"] == item["actual_decision"] for item in results)
     assert all(item["passed"] for item in results)
     assert all(item["execution_ms"] >= 0 for item in results)
     assert body["transaction_execution"] == "disabled"
-    assert body["scorecard"]["total"] == 12
-    assert body["scorecard"]["passed"] == 12
+    assert body["scorecard"]["total"] == 17
+    assert body["scorecard"]["passed"] == 17
     assert body["scorecard"]["failed"] == 0
-    assert scorecard["total"] == 12
-    assert simulation_audits == 12
-    assert len(simulation_rows) == 12
+    assert scorecard["total"] == 17
+    assert simulation_audits == 17
+    assert len(simulation_rows) == 17
+
+
+def test_attack_scenarios_return_blocked_signer_and_persist_evidence():
+    app = create_app(Settings(database_url="sqlite://", log_level="CRITICAL", admin_token="simulation-admin-token"))
+    scenarios = (
+        "unauthorized-recipient-payment", "prompt-injection-payment-override",
+        "spending-limit-bypass", "duplicate-payment-replay", "unauthorized-contract-method",
+    )
+    with TestClient(app, raise_server_exceptions=False) as client:
+        results = [client.post(f"/api/v1/simulation/run/{name}", headers={"Authorization": "Bearer simulation-admin-token"}).json() for name in scenarios]
+        with client.app.state.session_factory() as session:
+            evidence = session.scalars(select(AuditEvent).where(AuditEvent.event_type == "ATTACK_EXECUTION_EVIDENCE")).all()
+    assert all(result["actual_decision"] == "BLOCK" and result["passed"] for result in results)
+    assert all(result["execution_evidence"]["signer_invoked"] is False for result in results)
+    assert all(result["execution_evidence"]["broadcast"] is False for result in results)
+    assert len(evidence) == 5
+    assert all(row.details["signer_invoked"] is False and row.details["broadcast"] is False for row in evidence)
 
 
 def test_simulation_lab_rejects_unauthorized_run_and_unknown_scenario():

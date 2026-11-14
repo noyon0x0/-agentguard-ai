@@ -206,9 +206,32 @@ def test_verified_transaction_gets_testnet_explorer_link(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["verified"] is True
+    assert response.json()["execution_succeeded"] is True
     assert response.json()["explorer_url"] == f"https://explorer.testnet.near.org/transactions/{TX_HASH}"
     assert calls[1]["method"] == "tx"
     assert calls[1]["params"]["wait_until"] == "FINAL"
+
+
+def test_access_key_list_inspection_returns_permission_scope_without_secrets(monkeypatch):
+    responses = iter([
+        rpc_result({"chain_id": "testnet"}),
+        rpc_result({"keys": [{"public_key": "ed25519:public-only", "access_key": {
+            "nonce": 1,
+            "permission": {"FunctionCall": {"allowance": "100000000000000000000000", "receiver_id": "token.testnet", "method_names": ["ft_transfer"]}},
+        }}]}),
+    ])
+    calls = []
+    def fake_post(url, **kwargs):
+        calls.append(kwargs["json"])
+        return next(responses)
+    monkeypatch.setattr("app.foundation.near_client.requests.post", fake_post)
+    _, client = make_client()
+    with client:
+        response = client.get("/api/v1/near/accounts/alice.testnet/access-keys")
+    assert response.status_code == 200
+    assert response.json()["keys"][0]["permission"]["FunctionCall"]["receiver_id"] == "token.testnet"
+    assert calls[1]["params"]["request_type"] == "view_access_key_list"
+    assert "private_key" not in response.text and "secret_key" not in response.text
 
 
 def test_missing_transaction_maps_to_not_found(monkeypatch):

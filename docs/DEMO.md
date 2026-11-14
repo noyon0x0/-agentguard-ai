@@ -1,4 +1,4 @@
-# Demo Walkthrough
+﻿# Demo Walkthrough
 
 ## Recording
 
@@ -24,11 +24,13 @@ that no credentials or personal information are visible.
 3. **Prompt injection / recipient attacks:** use the Simulation Lab or enter a test request. Each run creates evaluation and audit records.
 4. **Human review:** run the large-payout case, then resolve it from Human Approval Center. Approval is admin-protected, revalidated, and expires after 15 minutes.
 5. **Agent freeze:** freeze an agent in Agent Management and run another evaluation for that agent. The backend should block it. Unfreeze after the demo if desired.
-6. **Simulation scorecard:** run all 12 scenarios. Show actual expected/actual decision, pass/fail, reason, test ID, duration, and associated audit request IDs returned by the API.
+6. **Simulation scorecard:** run all 17 scenarios. Show actual expected/actual decision, pass/fail, reason, test ID, duration, and associated audit request IDs returned by the API.
 7. **NEAR Testnet:** query a public account such as `wrap.testnet`. Distinguish RPC account/contract metadata from any transaction execution.
 8. **Audit & Forensics:** show the persisted events if admin access and records are available.
 9. **Telegram:** point out that delivery is not configured; no alert should be represented as sent.
 
+10. **Testnet transfer experiment:** only after configuring a disposable `.testnet` sender, recipient, Testnet-only key, and `AGENTGUARD_NEAR_TRANSACTIONS_ENABLED=true`, confirm the panel shows current Testnet RPC and account state. Submit one 0.01 NEAR payment, verify the final status and explorer link, then show its audit history. Without credentials, show the disabled/unavailable state; do not invent a hash. Use the panel's four non-broadcasting attack checks to show blocked outcomes and zero signer invocations.
+
 ## Safety language for the presentation
 
-Say: “The backend evaluated this request and persisted its policy decision.” Do not say that funds were protected on-chain, a transaction was simulated on-chain, an approval was signed, or the ledger is tamper-proof. This project does not submit payments.
+For ordinary evaluation, say: â€œThe backend evaluated this request and persisted its policy decision.â€ For a live experiment, describe it as a capped Testnet transfer only after the API verifies FINAL success, and show the returned hash and explorer link. Never say that funds were protected on-chain, a simulation was on-chain, an approval was signed, or the audit store is tamper-proof. The app does not submit Mainnet transactions.

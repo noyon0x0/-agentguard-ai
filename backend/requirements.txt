@@ -4,4 +4,5 @@ pydantic
 pytest
 httpx
 requests
+py-near==1.2.22
 SQLAlchemy>=2.0,<3.0

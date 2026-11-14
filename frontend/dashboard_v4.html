@@ -216,15 +216,22 @@
         <h2 class="page-title" id="near-title">NEAR Testnet Monitor</h2>
         <div class="grid cols2">
           <article class="card"><h3>RPC health</h3><p class="sub">Network identity is verified against the RPC status response.</p><div id="near-health-state" class="state loading">Checking Testnet RPC…</div><button id="near-health-refresh" class="btn" type="button">Check RPC now</button></article>
-          <article class="card"><h3>Account balance and contract lookup</h3><p class="sub">Finalized, read-only account query.</p><form id="near-account-form" class="inline"><label class="sr-only" for="near-account-id">NEAR account ID</label><input id="near-account-id" value="wrap.testnet" maxlength="64" required><button class="btn btn-primary" type="submit">Look up account</button><button id="near-contract-check" class="btn" type="button">Check contract</button></form><div id="near-account-result" class="state empty" role="status" aria-live="polite">No account query yet.</div></article>
+          <article class="card"><h3>Account balance and contract lookup</h3><p class="sub">Finalized, read-only account query.</p><form id="near-account-form" class="inline"><label class="sr-only" for="near-account-id">NEAR account ID</label><input id="near-account-id" value="wrap.testnet" maxlength="64" required><button class="btn btn-primary" type="submit">Look up account</button><button id="near-contract-check" class="btn" type="button">Check contract</button><button id="near-access-keys" class="btn" type="button">Inspect access keys</button></form><div id="near-account-result" class="state empty" role="status" aria-live="polite">No account query yet.</div></article>
           <article class="card"><h3>Verified transaction lookup</h3><p class="sub">Explorer URL appears only if Testnet RPC confirms the transaction hash and signer.</p><form id="near-tx-form" class="form-grid"><div class="field full"><label for="near-tx-hash">Transaction hash</label><input id="near-tx-hash" class="mono" required></div><div class="field full"><label for="near-tx-sender">Sender account ID</label><input id="near-tx-sender" required maxlength="64"></div><div class="field full"><button class="btn btn-primary" type="submit">Verify transaction</button></div></form><div id="near-tx-result" class="state empty" role="status" aria-live="polite">No transaction lookup yet.</div></article>
+        </div>
+        <h3 class="page-title">Testnet Transaction Experiment</h3>
+        <div class="grid cols2">
+          <article class="card"><h3>Configured account and network</h3><p class="sub">Backend-reported RPC state and public account details. Signing credentials remain in the local OS keychain or backend signer.</p><div id="near-experiment-status" class="state loading">Loading Testnet experiment status…</div><button id="near-experiment-refresh" class="btn" type="button">Refresh status</button></article>
+          <article class="card"><h3>Authorized payment</h3><p class="sub">Policy evaluation never signs. ALLOW and approved WARN requests wait for separate explicit confirmation before a capped Testnet transfer.</p><form id="near-experiment-form" class="form-grid"><div class="field full"><label for="experiment-recipient">Recipient</label><input id="experiment-recipient" required maxlength="64"></div><div class="field"><label for="experiment-amount">Amount (NEAR)</label><input id="experiment-amount" type="number" min="0.000000000000000000000001" max="0.01" step="any" value="0.01" required></div><div class="field"><label for="experiment-prompt">Payment context</label><input id="experiment-prompt" maxlength="512" value="Authorized 0.01 NEAR Testnet demo payment"></div><div class="field full"><button class="btn btn-primary" type="submit">Evaluate payment request</button></div></form><div id="near-experiment-result" class="state empty" role="status" aria-live="polite">No Testnet transfer request submitted.</div></article>
+          <article class="card"><h3>Non-broadcasting attack checks</h3><p class="sub">Runs the backend policy engine against generated attacks. These controls never call the signer.</p><div class="actions"><button class="btn near-attack" data-scenario="unauthorized-recipient" type="button">Unauthorized recipient</button><button class="btn near-attack" data-scenario="prompt-injection" type="button">Prompt injection</button><button class="btn near-attack" data-scenario="spending-limit" type="button">Limit bypass</button><button class="btn near-attack" data-scenario="duplicate-replay" type="button">Duplicate replay</button></div><div id="near-attack-results" class="state empty" role="status" aria-live="polite">No Testnet attack checks run yet.</div></article>
+          <article class="card"><h3>Experiment audit history</h3><p class="sub">Persisted Testnet transaction and attack evidence from the backend.</p><button id="near-experiment-history-refresh" class="btn" type="button">Refresh history</button><div id="near-experiment-history" class="state empty" role="status" aria-live="polite">No history loaded.</div></article>
         </div>
       </section>
 
       <section class="section" id="simulation" aria-labelledby="simulation-title">
         <h2 class="page-title" id="simulation-title">Attack Simulation Lab</h2>
         <article class="card"><p class="sub">Scenarios invoke the real server-side engine and persist evaluation, test, and audit records. All runs are non-executing.</p>
-          <div class="inline"><button id="run-all-simulations" class="btn btn-primary" type="button">Run all 12 scenarios</button><div id="simulation-scorecard" class="state empty" role="status" aria-live="polite">Scorecard not loaded.</div></div>
+          <div class="inline"><button id="run-all-simulations" class="btn btn-primary" type="button">Run all backend scenarios</button><div id="simulation-scorecard" class="state empty" role="status" aria-live="polite">Scorecard not loaded.</div></div>
           <div id="simulation-state" class="state loading">Loading scenario definitions…</div>
           <div class="table-wrap"><table><caption>Backend-defined security scenarios</caption><thead><tr><th>Scenario</th><th>Expected</th><th>Test</th></tr></thead><tbody id="simulation-scenarios"></tbody></table></div>
           <div id="simulation-results" class="grid cols2" aria-live="polite"></div>
@@ -292,10 +299,11 @@
       return error instanceof Error ? error.message : "Request failed";
     }
     async function api(path, options = {}) {
+      const { admin = false, timeoutMs = 12000, ...fetchOptions } = options;
       const headers = new Headers(options.headers || {});
       if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-      if (options.admin && adminToken) headers.set("Authorization", `Bearer ${adminToken}`);
-      const response = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: AbortSignal.timeout(12000) });
+      if (admin && adminToken) headers.set("Authorization", `Bearer ${adminToken}`);
+      const response = await fetch(`${API_BASE}${path}`, { ...fetchOptions, headers, signal: AbortSignal.timeout(timeoutMs) });
       let body;
       try { body = await response.json(); } catch (_) { body = null; }
       if (!response.ok) {
@@ -560,6 +568,17 @@
     }
     $("near-account-form").addEventListener("submit", (event) => { event.preventDefault(); lookupAccount(false); });
     $("near-contract-check").addEventListener("click", () => lookupAccount(true));
+    $("near-access-keys").addEventListener("click", async () => {
+      const id = $("near-account-id").value.trim();
+      setState("near-account-result", "Inspecting finalized Testnet access-key permissions…", "loading");
+      try {
+        const data = await api(`/api/v1/near/accounts/${encodeURIComponent(id)}/access-keys`);
+        const scopes = data.keys.map((key) => key.permission?.FunctionCall
+          ? `${key.permission.FunctionCall.receiver_id} methods: ${(key.permission.FunctionCall.method_names || []).join(", ") || "any"}`
+          : "Full-access key");
+        setState("near-account-result", `Verified ${data.keys.length} public access keys: ${scopes.join("; ") || "none"}`, "ok");
+      } catch (error) { setState("near-account-result", safeError(error), "error"); }
+    });
     $("near-tx-form").addEventListener("submit", async (event) => {
       event.preventDefault(); setState("near-tx-result", "Verifying transaction status at finality…", "loading");
       const params = new URLSearchParams({ sender_account_id: $("near-tx-sender").value.trim() });
@@ -577,6 +596,123 @@
       } catch (error) { setState("near-tx-result", safeError(error), "error"); }
     });
 
+    function renderExperimentExecution(data) {
+      const target = $("near-experiment-result"); target.replaceChildren();
+      target.append(node("div", `Request ${data.request_id} • decision ${data.decision} • signing invoked ${data.signer_invoked}`, "row-detail mono"));
+      target.append(node("div", `${data.request.amount_near} NEAR from ${data.request.sender} to ${data.request.recipient}`, "row-detail"));
+      target.append(node("div", `Transaction status: ${data.execution.status || "NOT_SUBMITTED"}`, "row-detail"));
+      if (data.explanation) target.append(node("div", data.explanation, "row-detail"));
+      const txHash = data.execution.transaction_hash;
+      if (txHash) {
+        target.append(node("div", `Transaction hash: ${txHash}`, "row-detail mono"));
+        if (data.execution.explorer_url) {
+          const label = data.execution.status === "SUCCESS" ? "Open verified successful Testnet transaction"
+            : data.execution.status === "FAILED" ? "Open verified failed Testnet transaction"
+              : "Open Testnet explorer record (final status pending)";
+          const link = node("a", label);
+          const url = new URL(data.execution.explorer_url);
+          if (url.protocol === "https:" && url.hostname === "explorer.testnet.near.org") { link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer"; target.append(link); }
+        }
+      }
+      target.className = `state ${data.decision === "BLOCK" ? "error" : data.decision === "WARN" ? "warn" : data.execution.status === "SUCCESS" ? "ok" : "error"}`;
+      if (data.decision === "WARN") {
+        const approve = node("button", "Approve policy review", "btn btn-primary");
+        approve.type = "button";
+        approve.addEventListener("click", async () => {
+          if (!window.confirm(`Approve this WARN request for ${data.request.amount_near} NEAR to ${data.request.recipient}? This only approves policy review; broadcast still requires a separate confirmation.`)) return;
+          setBusy(approve, true, "Approving…");
+          try {
+            const result = await api(`/api/v1/near/experiment/transactions/${encodeURIComponent(data.request_id)}/approve`, { method: "POST", admin: true, timeoutMs: 60000 });
+            renderExperimentExecution(result); await loadNearExperimentHistory();
+          } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+        });
+        target.append(approve);
+      }
+      if (data.decision === "ALLOW" && data.execution.status === "AWAITING_EXPLICIT_CONFIRMATION") {
+        const confirmTransfer = node("button", "Confirm and broadcast Testnet transfer", "btn btn-primary");
+        confirmTransfer.type = "button";
+        confirmTransfer.addEventListener("click", async () => {
+          const message = `Broadcast ${data.request.amount_near} NEAR on NEAR TESTNET from ${data.request.sender} to ${data.request.recipient}? This is a live Testnet transaction. Mainnet is not used.`;
+          if (!window.confirm(message)) return;
+          setBusy(confirmTransfer, true, "Submitting…");
+          try {
+            const result = await api(`/api/v1/near/experiment/transactions/${encodeURIComponent(data.request_id)}/confirm`, {
+              method: "POST", admin: true, timeoutMs: 60000,
+              headers: { "X-Live-Testnet-Transfer-Confirmation": "CONFIRM TESTNET TRANSFER" },
+            });
+            renderExperimentExecution(result);
+            await Promise.all([loadNearExperimentStatus(), loadNearExperimentHistory(), loadAudit()]);
+          } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+        });
+        target.append(confirmTransfer);
+      }
+    }
+    async function loadNearExperimentStatus() {
+      if (!adminToken) { setState("near-experiment-status", "Enter the admin token to inspect the Testnet experiment configuration.", "empty"); return; }
+      setState("near-experiment-status", "Reading current Testnet and account state…", "loading");
+      try {
+        const data = await api("/api/v1/near/experiment/status", { admin: true, timeoutMs: 60000 });
+        const liveState = data.transaction_ready ? "ready" : data.transactions_enabled ? "misconfigured" : "disabled";
+        const summary = `Network ${data.network} • RPC ${data.rpc_status} • account ${data.sender_account || "not configured"} (${data.account_verified ? "verified" : "unverified"}) • public key ${data.public_key || "not configured"} • balance ${data.sender_balance_near ?? "unavailable"} NEAR • faucet funding ${data.faucet_funding_status} (source verified: ${data.funding_source_verified}) • authorized recipient ${data.authorized_recipient || "not configured"} (${data.recipient_verified ? "verified" : "unverified"}) • signer ${data.signer_permission_status} • live transfers ${liveState} • cap ${data.max_transfer_near} NEAR`;
+        setState("near-experiment-status", summary, data.rpc_status === "healthy" ? "ok" : "error");
+        if (data.account_explorer_url) {
+          const explorer = node("a", "Open Testnet account explorer");
+          const url = new URL(data.account_explorer_url);
+          if (url.protocol === "https:" && url.hostname === "explorer.testnet.near.org") { explorer.href = url.href; explorer.target = "_blank"; explorer.rel = "noopener noreferrer"; $("near-experiment-status").append(explorer); }
+        }
+        if (data.last_transaction_hash) {
+          $("near-experiment-status").append(node("div", `Last transaction: ${data.last_transaction_hash}`, "row-detail mono"));
+          const txLink = node("a", "Open last Testnet transaction");
+          txLink.href = `https://explorer.testnet.near.org/transactions/${encodeURIComponent(data.last_transaction_hash)}`;
+          txLink.target = "_blank"; txLink.rel = "noopener noreferrer"; $("near-experiment-status").append(txLink);
+        }
+        if (data.authorized_recipient && !$("experiment-recipient").value) $("experiment-recipient").value = data.authorized_recipient;
+      } catch (error) { setState("near-experiment-status", safeError(error), "error"); }
+    }
+    async function loadNearExperimentHistory() {
+      if (!adminToken) { setState("near-experiment-history", "Admin authentication required.", "empty"); return; }
+      try {
+        const events = await api("/api/v1/near/experiment/history?limit=40", { admin: true });
+        const target = $("near-experiment-history"); target.replaceChildren();
+        for (const event of events) {
+          const row = node("div", null, "activity-item");
+          row.append(node("div", `${event.event_type} • ${event.decision}`, "row-title"));
+          row.append(node("div", `Request ${event.request_id} • ${event.details.status || event.details.scenario || "policy decision"} • signer ${event.details.signer_invoked ?? "not recorded"}`, "row-detail mono"));
+          if (event.details.transaction_hash) row.append(node("div", `Transaction ${event.details.transaction_hash}`, "row-detail mono"));
+          target.append(row);
+        }
+        if (!events.length) target.append(node("div", "No Testnet experiment events recorded.", "row-detail"));
+        target.className = `state ${events.length ? "ok" : "empty"}`;
+      } catch (error) { setState("near-experiment-history", safeError(error), "error"); }
+    }
+    $("near-experiment-refresh").addEventListener("click", loadNearExperimentStatus);
+    $("near-experiment-history-refresh").addEventListener("click", loadNearExperimentHistory);
+    $("near-experiment-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setState("near-experiment-result", "Evaluating policy before any signing operation…", "loading");
+      try {
+        const result = await api("/api/v1/near/experiment/transactions", {
+          method: "POST", admin: true, timeoutMs: 60000, headers: { "Idempotency-Key": `near-demo-${crypto.randomUUID()}` },
+          body: JSON.stringify({ recipient: $("experiment-recipient").value.trim(), amount_near: $("experiment-amount").value, prompt: $("experiment-prompt").value }),
+        });
+        renderExperimentExecution(result);
+        await Promise.all([loadNearExperimentStatus(), loadNearExperimentHistory(), loadAudit()]);
+      } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+    });
+    document.querySelectorAll(".near-attack").forEach((button) => button.addEventListener("click", async () => {
+      setBusy(button, true, "Checking…");
+      try {
+        const result = await api(`/api/v1/near/experiment/attacks/${encodeURIComponent(button.dataset.scenario)}`, { method: "POST", admin: true });
+        const target = $("near-attack-results");
+        const row = node("div", null, "activity-item");
+        row.append(node("div", `${result.scenario}: ${result.decision} • signer invoked ${result.signer_invoked}`, "row-title"));
+        row.append(node("div", `Request ${result.request_id || result.request_ids?.join(", ")} • tx ${result.transaction_hash || "none"}`, "row-detail mono"));
+        target.prepend(row); target.className = "state ok";
+        await Promise.all([loadNearExperimentHistory(), loadAudit()]);
+      } catch (error) { setState("near-attack-results", safeError(error), "error"); }
+      finally { setBusy(button, false); }
+    }));
+
     function renderSimulationResult(result) {
       const card = node("article", null, "card");
       const heading = node("div", null, "inline");
@@ -585,6 +721,10 @@
       card.append(node("div", `Test ID ${result.test_id}`, "row-detail mono"));
       card.append(node("div", `Expected ${result.expected_decision} • Actual ${result.actual_decision} • ${result.execution_ms} ms`, "row-detail"));
       card.append(node("p", result.reason, "row-detail"));
+      if (result.execution_evidence) {
+        const evidence = result.execution_evidence;
+        card.append(node("div", `Execution evidence: ${evidence.outcome} • signer invoked: ${evidence.signer_invoked} • broadcast: ${evidence.broadcast}`, "row-detail mono"));
+      }
       card.append(node("div", `Audit request ID(s): ${result.request_ids.join(", ")}`, "row-detail mono"));
       return card;
     }
@@ -763,7 +903,7 @@
       finally { button.disabled = false; await loadTelegram(); }
     });
     async function refreshData() {
-      await Promise.allSettled([loadOverview(), loadAgents(), loadThreats(), loadPolicy(), loadApprovals(), loadAudit(), loadActivity(), loadKillSwitch(), loadSettings(), loadTelegram(), loadSimulationLab(), checkRpcHealth()]);
+      await Promise.allSettled([loadOverview(), loadAgents(), loadThreats(), loadPolicy(), loadApprovals(), loadAudit(), loadActivity(), loadKillSwitch(), loadSettings(), loadTelegram(), loadSimulationLab(), checkRpcHealth(), loadNearExperimentStatus(), loadNearExperimentHistory()]);
     }
     $("refresh-all").addEventListener("click", refreshData);
     function updateActiveNavigation() {
