@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-_LOCAL_DEMO_ADMIN_TOKEN = "agentguard-local-demo-token"
 _DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / "agentguard_foundation.db"
 _DEFAULT_DATABASE_URL = f"sqlite:///{_DEFAULT_DATABASE_PATH.as_posix()}"
 _AGENTGUARD_TESTNET_ACCOUNT = "agentguard-v4-d95875f37108.testnet"
@@ -21,7 +20,9 @@ class Settings:
     environment: str = "development"
     database_url: str = _DEFAULT_DATABASE_URL
     log_level: str = "INFO"
-    admin_token: str = _LOCAL_DEMO_ADMIN_TOKEN
+    # Administrative routes are disabled until the operator configures a
+    # unique token. Never ship a known default bearer credential.
+    admin_token: str = ""
     near_testnet_rpc_url: str = "https://rpc.testnet.near.org"
     near_rpc_timeout_seconds: float = 5.0
     near_sender_account: str = _AGENTGUARD_TESTNET_ACCOUNT
@@ -40,9 +41,7 @@ class Settings:
             environment=os.getenv("AGENTGUARD_ENVIRONMENT", cls.environment),
             database_url=os.getenv("AGENTGUARD_DATABASE_URL", _DEFAULT_DATABASE_URL),
             log_level=os.getenv("AGENTGUARD_LOG_LEVEL", cls.log_level).upper(),
-            # Keep operator-only read endpoints available in a fresh local demo.
-            # Deployments should always supply their own secret via the environment.
-            admin_token=os.getenv("AGENTGUARD_ADMIN_TOKEN", cls.admin_token),
+            admin_token=os.getenv("AGENTGUARD_ADMIN_TOKEN", ""),
             near_testnet_rpc_url=os.getenv("AGENTGUARD_NEAR_TESTNET_RPC_URL", cls.near_testnet_rpc_url),
             near_rpc_timeout_seconds=float(os.getenv("AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS", "5")),
             near_sender_account=os.getenv("AGENTGUARD_NEAR_SENDER_ACCOUNT", cls.near_sender_account).strip(),

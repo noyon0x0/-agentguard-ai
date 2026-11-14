@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.near.testnet import create_authorization_receipt, is_valid_account_id, verify_testnet_account
 from app.security.policy import policy_engine
 from app.foundation.main import app as v4_api_app
+from app.foundation.legacy_auth import require_legacy_admin
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ async def app_lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="AgentGuard AI", description="Payment security demo API", lifespan=app_lifespan)
+app.state.admin_token = v4_api_app.state.settings.admin_token
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -67,7 +69,7 @@ def health_check():
     return {"project": "AgentGuard AI", "status": "running", "network": "NEAR Testnet"}
 
 
-@app.post("/payment/check")
+@app.post("/payment/check", dependencies=[Depends(require_legacy_admin)])
 def check_payment(payment: PaymentCheck):
     result = policy_engine.evaluate(payment.sender, payment.recipient, payment.amount, payment.memo)
     near_status = "not_checked_policy_block"
@@ -109,7 +111,7 @@ def check_payment(payment: PaymentCheck):
     return response
 
 
-@app.post("/payment/review/{tx_id}")
+@app.post("/payment/review/{tx_id}", dependencies=[Depends(require_legacy_admin)])
 def review_payment(tx_id: str, review: PaymentReview):
     with _audit_lock:
         item = next((entry for entry in audit_logs if entry.get("tx_id") == tx_id), None)
@@ -132,13 +134,13 @@ def review_payment(tx_id: str, review: PaymentReview):
         return dict(item)
 
 
-@app.get("/audit-logs")
+@app.get("/audit-logs", dependencies=[Depends(require_legacy_admin)])
 def get_audit_logs():
     with _audit_lock:
         return list(audit_logs)
 
 
-@app.post("/audit-logs/clear")
+@app.post("/audit-logs/clear", dependencies=[Depends(require_legacy_admin)])
 def clear_audit_logs():
     with _audit_lock:
         audit_logs.clear()

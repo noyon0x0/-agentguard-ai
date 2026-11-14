@@ -79,6 +79,7 @@
       <div class="brand"><div class="logo">🛡️</div><div><h1>AgentGuard AI <span class="badge-pro">v2.0 PRO</span></h1><p>Autonomous AI Agent Firewall & NEAR Protocol Guardrail Engine</p></div></div>
       <div class="header-actions"><span class="status-pill">● ENGINE ONLINE</span><button class="btn-export" onclick="exportReport()">📥 Export Audit JSON</button></div>
     </div>
+    <div class="glass" style="margin-bottom:16px;display:flex;gap:8px;align-items:center"><label for="legacyAdminToken" style="margin:0">Operator token</label><input id="legacyAdminToken" type="password" autocomplete="off" placeholder="Configured AGENTGUARD_ADMIN_TOKEN" style="max-width:360px"><button class="btn-export" onclick="unlockLegacyApi()">Unlock API</button><span id="legacyAuthStatus" class="kpi-sub">Not authenticated</span></div>
     <div class="kpi-grid">
       <div class="glass"><div class="kpi-title">Total AI Requests</div><div id="kpiTotal" class="kpi-val">0</div><div class="kpi-sub">Real-time intercepted</div></div>
       <div class="glass"><div class="kpi-title">Approved Volume</div><div id="kpiApprovedVol" class="kpi-val" style="color:var(--green)">0 NEAR</div><div id="kpiApprovedCount" class="kpi-sub">0 policy approvals only</div></div>
@@ -143,6 +144,9 @@
   <script>
     const API_BASE = 'http://127.0.0.1:8000';
     let latestState = null;
+    let legacyAdminToken = '';
+    function unlockLegacyApi() { legacyAdminToken = document.getElementById('legacyAdminToken').value; document.getElementById('legacyAdminToken').value = ''; document.getElementById('legacyAuthStatus').textContent = 'Checking…'; refreshState(); }
+    async function apiFetch(url, options = {}) { const headers = new Headers(options.headers || {}); if (legacyAdminToken) headers.set('Authorization', `Bearer ${legacyAdminToken}`); const response = await fetch(url, {...options, headers}); if (response.status === 401 || response.status === 503) document.getElementById('legacyAuthStatus').textContent = response.status === 401 ? 'Token rejected' : 'Server token not configured'; else if (response.ok) document.getElementById('legacyAuthStatus').textContent = 'Authenticated'; return response; }
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (character) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[character]));
     }
@@ -162,7 +166,7 @@
     async function runEvaluation() {
       const payload = { agent_id: document.getElementById('agentSelect').value, recipient: document.getElementById('recipientInput').value.trim(), amount_near: parseFloat(document.getElementById('amountInput').value), prompt: document.getElementById('promptInput').value.trim() };
       try {
-        const res = await fetch(API_BASE + '/api/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const res = await apiFetch(API_BASE + '/api/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json(); if (!res.ok) throw new Error(data.detail || `API ${res.status}`); renderVisuals(data); await refreshState();
       } catch (e) { document.getElementById('explanationBox').textContent = `Backend request failed: ${e.message}`; }
     }
@@ -177,16 +181,17 @@
     }
     async function savePolicy() {
       const payload = { max_single_tx_near: parseFloat(document.getElementById('sliderMaxTx').value), daily_spend_limit_near: 25.0, hitl_threshold_near: parseFloat(document.getElementById('sliderHitl').value), block_prompt_injection: document.getElementById('chkInjection').checked, strict_whitelist_mode: document.getElementById('chkWhitelist').checked };
-      await fetch(API_BASE + '/api/policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const response = await apiFetch(API_BASE + '/api/policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!response.ok) { alert(`Policy update failed: API ${response.status}`); return; }
       alert('✅ Live Security Policy Updated!');
     }
     async function handleHitl(txId, action) {
-      const res = await fetch(API_BASE + '/api/hitl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tx_id: txId, action: action }) });
+      const res = await apiFetch(API_BASE + '/api/hitl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tx_id: txId, action: action }) });
       const updated = await res.json(); renderVisuals(updated); await refreshState();
     }
     async function refreshState() {
       try {
-        const res = await fetch(API_BASE + '/api/state'); const state = await res.json(); latestState = state;
+        const res = await apiFetch(API_BASE + '/api/state'); if (!res.ok) throw new Error(`API ${res.status}`); const state = await res.json(); latestState = state;
         document.getElementById('kpiTotal').innerText = state.stats.total_requests;
         document.getElementById('kpiApprovedVol').innerText = state.stats.approved_volume_near + ' NEAR';
         document.getElementById('kpiApprovedCount').innerText = state.stats.approved_count + ' policy approvals only';

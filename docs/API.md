@@ -4,7 +4,9 @@ The combined port 8000 app mounts the v4 foundation API under `/v4`. Use `/v4/do
 
 ## Authentication
 
-Send `Authorization: Bearer <AGENTGUARD_ADMIN_TOKEN>` to operator-only routes. For a fresh loopback demo with no environment override, use `agentguard-local-demo-token`. No token is returned by the API. Invalid or missing credentials return `401`.
+Set a unique `AGENTGUARD_ADMIN_TOKEN` in the server environment and send `Authorization: Bearer <AGENTGUARD_ADMIN_TOKEN>` to protected routes. There is no default token: protected routes return `503` until configured and `401` for missing or invalid credentials after configuration. No token is returned by the API.
+
+The combined app retains authenticated legacy v3 `/api/...` routes. The standalone historical v1 and v2 apps also protect their sensitive routes with the same configured bearer token: v1 payment check/review and audit read/clear, and v2 state, policy, evaluation, and HITL. Public `/` health/dashboard routes remain public and do not expose private data. Set `AGENTGUARD_ADMIN_TOKEN` before use; without it protected routes return `503`.
 
 ## Health and dashboard projections
 

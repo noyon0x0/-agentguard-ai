@@ -26,7 +26,7 @@
 - [x] Signing and transaction submission are isolated in the opt-in Testnet experiment; ordinary evaluation remains non-executing.
 - [x] NEAR responses fail closed on wrong network, timeout, malformed response, or RPC error.
 - [x] Claims separate automated mocked RPC tests from point-in-time live RPC checks.
-- [x] Re-run the complete test suite on the final pre-commit source: 96 passed, 1 opt-in live Testnet transaction test skipped, and 1 existing deprecation warning.
+- [x] Re-run the complete test suite on the audited source: 130 passed, 1 opt-in live Testnet transaction test skipped, and 1 existing deprecation warning.
 - [ ] Review `docs/LIMITATIONS.md` before making security claims.
 - [x] Review the intended Git diff and exclude local SQLite databases, tokens, and temporary artifacts from the staged submission.
 

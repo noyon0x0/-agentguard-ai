@@ -7,10 +7,13 @@ from fastapi.testclient import TestClient
 
 from app import main
 
-client = TestClient(main.app)
+LEGACY_ADMIN_TOKEN = "legacy-v1-test-admin-token"
+main.app.state.admin_token = LEGACY_ADMIN_TOKEN
+client = TestClient(main.app, headers={"Authorization": f"Bearer {LEGACY_ADMIN_TOKEN}"})
 
 
 def setup_function():
+    main.app.state.admin_token = LEGACY_ADMIN_TOKEN
     client.post("/audit-logs/clear")
 
 

@@ -7,11 +7,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from .foundation.main import app as v4_api_app
+from .foundation.legacy_auth import require_legacy_admin
 from .foundation.near_client import NearAccountNotFound, NearIntegrationError, validate_account_id
 from .foundation.telegram import send_telegram
 
@@ -25,6 +26,7 @@ async def app_lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="AgentGuard AI v3.0 Ultimate", version="3.0.0", lifespan=app_lifespan)
+app.state.admin_token = v4_api_app.state.settings.admin_token
 
 app.add_middleware(
     CORSMiddleware,
@@ -136,7 +138,7 @@ def send_telegram_alert(title: str, message: str, severity: str):
     delivery = send_telegram(v4_api_app.state.settings, title, message)
     TELEGRAM_FEED[0]["delivery_status"] = delivery["status"]
 
-@app.get("/api/state")
+@app.get("/api/state", dependencies=[Depends(require_legacy_admin)])
 def get_state():
     approved = [x for x in AUDIT_LOGS if x["decision"] == "APPROVE"]
     blocked = [x for x in AUDIT_LOGS if x["decision"] == "BLOCK"]
@@ -156,7 +158,7 @@ def get_state():
         "telegram_feed": TELEGRAM_FEED[:8],
     }
 
-@app.post("/api/wallet/connect")
+@app.post("/api/wallet/connect", dependencies=[Depends(require_legacy_admin)])
 def connect_wallet(req: WalletConnectReq):
     w = req.wallet_id.strip().lower()
     rpc = check_near_rpc(w)
@@ -164,7 +166,7 @@ def connect_wallet(req: WalletConnectReq):
         POLICY_STATE["connected_wallet"] = w
     return {"wallet": w, "rpc": rpc, "status": "account_verified" if rpc.get("verified") and rpc.get("exists") else "verification_unavailable" if not rpc.get("verified") else "account_not_found"}
 
-@app.post("/api/policy")
+@app.post("/api/policy", dependencies=[Depends(require_legacy_admin)])
 def update_policy(p: PolicyUpdate):
     POLICY_STATE["max_single_tx_near"] = p.max_single_tx_near
     POLICY_STATE["hitl_threshold_near"] = p.hitl_threshold_near
@@ -174,7 +176,7 @@ def update_policy(p: PolicyUpdate):
     POLICY_STATE["telegram_alerts_enabled"] = p.telegram_alerts_enabled
     return {"status": "ok", "policy": {key: value for key, value in POLICY_STATE.items() if "token" not in key.casefold() and "secret" not in key.casefold()}}
 
-@app.post("/api/wallets")
+@app.post("/api/wallets", dependencies=[Depends(require_legacy_admin)])
 def manage_wallets(item: WalletListAction):
     target = "whitelisted_wallets" if item.list_type == "whitelist" else "blacklisted_wallets"
     w = item.wallet.strip().lower()
@@ -186,7 +188,7 @@ def manage_wallets(item: WalletListAction):
         POLICY_STATE[target].remove(w)
     return {"status": "ok", "policy": POLICY_STATE}
 
-@app.post("/api/agent/freeze")
+@app.post("/api/agent/freeze", dependencies=[Depends(require_legacy_admin)])
 def toggle_agent_freeze(item: AgentFreezeAction):
     if item.agent_id in AGENTS_DB:
         AGENTS_DB[item.agent_id]["frozen"] = item.frozen
@@ -194,7 +196,7 @@ def toggle_agent_freeze(item: AgentFreezeAction):
         send_telegram_alert(f"Agent {st}", f"{item.agent_id} changed by operator.", "WARN" if item.frozen else "INFO")
     return {"status": "ok", "agents": AGENTS_DB}
 
-@app.post("/api/evaluate")
+@app.post("/api/evaluate", dependencies=[Depends(require_legacy_admin)])
 def evaluate_tx(tx: TransactionRequest):
     now_ts = time.time()
     tx_id = f"AG-{int(now_ts * 1000) % 1000000}"
@@ -289,7 +291,7 @@ def evaluate_tx(tx: TransactionRequest):
 
     return record
 
-@app.post("/api/hitl")
+@app.post("/api/hitl", dependencies=[Depends(require_legacy_admin)])
 def resolve_hitl(item: ApprovalAction):
     if item.tx_id not in PENDING_QUEUE:
         raise HTTPException(status_code=404, detail="Not found")

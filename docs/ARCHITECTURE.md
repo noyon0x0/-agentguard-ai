@@ -21,7 +21,7 @@ The v4 page is a static HTML/CSS/JavaScript document. It builds dynamic text wit
 
 ## Components
 
-- **API composition:** `backend/app/main_v3.py` retains existing v3 routes, serves the v4 page, and mounts `backend/app/foundation/main.py` under `/v4`. The foundation app owns its database engine, SQLite migrations, NEAR client, routes, and safe request logging.
+- **API composition:** `backend/app/main_v3.py` retains existing v3 routes, serves the v4 page, and mounts `backend/app/foundation/main.py` under `/v4`. All seven legacy `/api/...` routes require the configured bearer token; with no token configured they fail closed. The foundation app owns its database engine, SQLite migrations, NEAR client, routes, and safe request logging.
 - **Schemas:** Pydantic models validate evaluation, policy, agent and human-review inputs. Unknown fields are rejected. Signing and credential fields are not accepted.
 - **Policy engine:** `security_engine.py` applies deterministic server rules. AI output is not an input to the decision function.
 - **Approval workflow:** `approval_workflow.py` enforces expiry and re-evaluates current blocking policy before an admin approval is accepted.

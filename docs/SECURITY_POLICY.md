@@ -36,7 +36,7 @@ These defaults are demo policy values, not recommendations or guarantees. Policy
 
 ## Human/operator controls
 
-Policy updates, agent state changes, pending review resolution, audit listing, and simulation operations require the bearer token. A fresh local demo defaults to `agentguard-local-demo-token`; set `AGENTGUARD_ADMIN_TOKEN` to a unique secret outside source control for any shared deployment. The default is a shared local-demo credential, not a production identity system.
+Policy updates, agent state changes, pending review resolution, audit listing, simulation operations, and sensitive legacy v1/v2/v3 API routes require the bearer token. No default token is shipped; protected actions fail closed until `AGENTGUARD_ADMIN_TOKEN` is configured. The shared-token design is not a production identity system.
 
 The global kill switch is admin-controlled, increments the policy version, and causes the backend evaluation engine to block new v4 requests. Policy changes and kill-switch changes create version snapshots. Human approval rechecks current hard policy and cannot override a current block. Normal `APPROVE` remains policy-only; live submission is available only through the separate admin-protected, disabled-by-default Testnet experiment.
 

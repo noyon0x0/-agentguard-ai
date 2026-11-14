@@ -30,7 +30,7 @@ The v4 dashboard is served by `app.main_v3:app` at `/dashboard-v4` on port 8000.
 | Status | Features |
 | --- | --- |
 | **Implemented** | FastAPI foundation; deterministic policy; SQLite persistence; idempotency, limits, recipient allowlists, approvals and audit chain; read-only NEAR monitoring; explicitly gated Testnet transfer endpoint with a 0.01 NEAR cap, OS-keychain-backed near-cli-rs signer, explicit pre-broadcast confirmation, preflight checks, final status verification, and transaction audit history; simulated and Testnet attack checks. |
-| **Tested** | The complete suite passed **96 tests, 1 live transaction test skipped, and 1 existing warning** during this audit on 2026-11-14, including the browser smoke test. |
+| **Tested** | The complete suite passed **113 tests, 1 live transaction test skipped, and 1 existing warning** during the 2026-11-14 security follow-up, including the browser smoke test. |
 | **Mocked** | Automated NEAR RPC tests use mocked provider replies. Simulations use generated requests but execute the real local policy engine. Telegram delivery tests must mock the provider; no real delivery is implied. |
 | **Unverified** | Continued NEAR RPC availability beyond the point-in-time checks below, actual Telegram delivery, cross-browser/mobile/accessibility review, deployment security, and multi-process consistency. |
 | **Planned / limited** | A SHA-256 chain detects edits but SQLite remains operator-editable; no external immutable anchor/signature exists. Authentication is one shared bearer token, migrations are additive rather than managed by Alembic, and public threat intelligence is not connected. |
@@ -99,7 +99,7 @@ The database defaults to `backend/agentguard_foundation.db`, independent of the 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `AGENTGUARD_PORT` | `8000` | Loopback Uvicorn port used by the documented PowerShell startup command. |
-| `AGENTGUARD_ADMIN_TOKEN` | `agentguard-local-demo-token` | Bearer token for admin-only policy changes, reviews, audit listing and simulation operations. Override for shared deployments. |
+| `AGENTGUARD_ADMIN_TOKEN` | unset | Required bearer token for admin-only actions and sensitive legacy v1/v2/v3 routes. Protected actions return `503` until configured. |
 | `AGENTGUARD_DATABASE_URL` | `backend/agentguard_foundation.db` | SQLite storage location; relative override paths resolve from the process working directory. |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | HTTPS NEAR RPC endpoint; client rejects non-Testnet chain IDs. |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | RPC request timeout, from 0.1 to 60 seconds. |
@@ -112,7 +112,7 @@ The database defaults to `backend/agentguard_foundation.db`, independent of the 
 | `AGENTGUARD_ENVIRONMENT` | `development` | Runtime environment label. |
 | `AGENTGUARD_LOG_LEVEL` | `INFO` | Structured log level. |
 
-The local token is intended for loopback demos only. Keep Uvicorn bound to `127.0.0.1` for local use, and use a unique token outside the local demo. Optional Telegram settings are `AGENTGUARD_TELEGRAM_BOT_TOKEN` and `AGENTGUARD_TELEGRAM_CHAT_ID`; secrets are never returned to the browser. Full steps are in [Installation](docs/INSTALLATION.md).
+No default admin credential is shipped. Set a unique token in the server environment; keep Uvicorn bound to `127.0.0.1` for local use. Optional Telegram settings are `AGENTGUARD_TELEGRAM_BOT_TOKEN` and `AGENTGUARD_TELEGRAM_CHAT_ID`; secrets are never returned to the browser. Full steps are in [Installation](docs/INSTALLATION.md).
 
 ## Payment security workflow
 
@@ -143,9 +143,10 @@ Browser dashboard
 The combined app serves `/dashboard-v4` and mounts the v4 API at
 `/v4/api/v1/`. The foundation app owns its configuration, database lifecycle,
 routes, and NEAR client. See [Architecture](docs/ARCHITECTURE.md) for details.
-The legacy v3 routes remain available for compatibility. They do not use the
-v4 shared bearer-token authorization layer, so run this prototype on loopback
-only and do not expose the combined app to an untrusted network.
+The legacy v3 `/api/...` routes remain available for compatibility and require
+the same configured bearer token as v4 operator actions. With no configured
+token, they fail closed. The shared-token design remains intended for a local
+demo, not a production identity system.
 
 The main API surfaces are health (`GET /v4/api/v1/health`), policy evaluation
 (`POST /v4/api/v1/evaluations`), admin-only review decisions and audit
@@ -161,7 +162,7 @@ python -m pip install -r backend\requirements.txt
 backend\.venv\Scripts\python.exe -m pytest -p no:cacheprovider -p no:tmpdir -q
 ```
 
-The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC and signer responses; they do not broadcast a real transaction. The latest complete run in this audit on 2026-11-14 passed **96 tests, 1 live Testnet transaction test skipped, and 1 warning** (exit 0), including the browser smoke test. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
+The browser smoke test requires Playwright and Microsoft Edge; install `backend/requirements-browser.txt` to include it. Tests use disposable SQLite data and mocked NEAR RPC and signer responses; they do not broadcast a real transaction. The latest complete run in this audit on 2026-11-14 passed **130 tests, 1 live Testnet transaction test skipped, and 1 warning** (exit 0), including the browser smoke test and legacy v1/v2/v3 API authorization tests. The warning is Starlette's `TestClient`/`httpx` deprecation. See [Test Instructions](docs/TESTING.md) for commands and coverage limits.
 
 ## Local demo
 
@@ -190,7 +191,7 @@ contains no credentials.
 
 The read-only NEAR client permits `status`, `query`, and `tx` methods for monitoring. The separate opt-in transaction adapter is pinned to the official Testnet RPC and uses near-cli-rs `sign-with-keychain` by default. It checks network, sender and recipient accounts, balance, matching public FullAccess key, policy, idempotency, and a 0.01 NEAR cap before signing. ALLOW and approved WARN results pause for a separate explicit broadcast confirmation. It verifies final status with the read-only client before returning success. See the [NEAR RPC account documentation](https://docs.near.org/api/rpc/contracts) and [transaction status documentation](https://docs.near.org/api/rpc/transactions).
 
-Point-in-time read-only evidence from 2026-11-13: `/v4/api/v1/near/health` returned HTTP 200 with `network=testnet` and 3813 ms latency; `/v4/api/v1/near/accounts/wrap.testnet` returned HTTP 200 with Testnet account metadata. These checks queried RPC status/account data only. No transaction was looked up, signed, or submitted, and RPC availability can change.
+Read-only verification during the 2026-11-14 follow-up: the official Testnet RPC returned `network=testnet`, confirmed sender `agentguard-v4-d95875f37108.testnet` with **15 NEAR**, matched the configured public key to an active `FullAccess` key, and verified the authorized recipient. No transaction was signed or submitted. The current shell has no `near` executable and the named CLI profile is not ready, so live signing remains unavailable and disabled. RPC availability and balance can change.
 
 Normal `APPROVE` evaluation is policy-only. A separately configured, admin-only Testnet experiment can submit a maximum 0.01 NEAR transfer through a backend-isolated keychain signer. It is disabled by default and requires a dedicated `.testnet` sender, an on-chain FullAccess public key, an explicitly configured authorized recipient, and a second explicit confirmation before submission. The older v2/v3 demos also label approval as policy-only and no longer manufacture chain balances or explorer receipts. Read the [limitations](docs/LIMITATIONS.md) before presenting the prototype as a guarantee or production control.
 
@@ -282,4 +283,4 @@ Start the server on loopback and verify account balance, public key, Testnet sta
 
 Run the no-transfer attack demonstrations from the experiment panel, or call the protected `/v4/api/v1/near/experiment/attacks/{unauthorized-recipient|prompt-injection|spending-limit|duplicate-replay}` endpoints. The separate live test is skipped by default. To intentionally submit one 0.01 NEAR transfer as a live test, configure the variables above and set `AGENTGUARD_RUN_LIVE_NEAR_TEST=true` before running `backend\.venv\Scripts\python.exe -m pytest backend\tests\live\test_near_testnet_live_transfer.py -q`. This spends Testnet funds and must be run only against a disposable test account.
 
-The Testnet account was created during setup and its 10 NEAR balance was confirmed via RPC. No payment transfer was broadcast. Do not present mocked transaction hashes from automated tests as on-chain evidence.
+The dedicated Testnet account was created during prior setup; this audit's official RPC query confirmed its current 15 NEAR balance and access-key match. The current shell could not locate near-cli-rs, so the signer profile is not ready. No payment transfer was broadcast. Do not present mocked transaction hashes from automated tests as on-chain evidence.

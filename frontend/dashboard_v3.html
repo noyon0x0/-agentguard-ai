@@ -17,6 +17,9 @@
     .pill-v3 { font-size:11px; background:rgba(56,189,248,0.18); color:var(--cyan); padding:3px 10px; border-radius:99px; font-weight:700; margin-left:6px; }
     .brand p { font-size:12px; color:var(--muted); }
     .top-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .legacy-auth { display:flex; align-items:center; gap:6px; }
+    .legacy-auth input { width:190px; }
+    .legacy-auth-status { font-size:11px; color:var(--muted); }
     .wallet-box { display:flex; align-items:center; gap:6px; background:var(--tile); padding:6px 10px; border-radius:99px; border:1px solid var(--border); }
     .wallet-box input { background:transparent; border:none; color:var(--cyan); font-size:12px; font-weight:700; width:125px; outline:none; }
     .mi-pill-btn { border:none; border-radius:99px; padding:8px 14px; font-size:12px; font-weight:700; cursor:pointer; color:#fff; background:var(--tile); }
@@ -80,6 +83,7 @@
     <div class="mi-card topbar">
       <div class="brand"><div class="brand-icon">🛡️</div><div><h1>AgentGuard AI <span class="pill-v3">v3.0 ULTIMATE</span></h1><p>HyperOS Security Control Center • NEAR Web3 & AI Firewall</p></div></div>
       <div class="top-controls">
+        <div class="legacy-auth"><input id="legacyAdminToken" type="password" autocomplete="off" placeholder="Admin bearer token" aria-label="Admin bearer token" /><button id="legacyAuthButton" class="mi-pill-btn" type="button">Unlock API</button><span id="legacyAuthStatus" class="legacy-auth-status" role="status">Admin token required</span></div>
         <div class="wallet-box"><span>🔗</span><input id="walletInput" type="text" value="founder.testnet" /><button class="mi-pill-btn btn-connect" onclick="connectWallet()">Verify Testnet account</button></div>
         <button id="soundBtn" class="mi-pill-btn" onclick="toggleSound()">🔊 Sound: ON</button>
         <button class="mi-pill-btn" onclick="exportReport()">📥 Export JSON</button>
@@ -164,6 +168,14 @@
     const API = 'http://127.0.0.1:8000';
     let soundOn = true;
     let cachedState = null;
+    let adminToken = '';
+
+    function apiFetch(path, options = {}) {
+      if (!adminToken) throw new Error('Enter the admin token to use the legacy API.');
+      const headers = new Headers(options.headers || {});
+      headers.set('Authorization', `Bearer ${adminToken}`);
+      return fetch(API + path, { ...options, headers });
+    }
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (character) => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;"}[character]));
@@ -200,7 +212,7 @@
       const w = document.getElementById('walletInput').value.trim();
       const label = document.getElementById('walletBalLabel'); label.textContent = 'Checking Testnet account?';
       try {
-        const res = await fetch(API + '/api/wallet/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet_id: w }) });
+        const res = await apiFetch('/api/wallet/connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet_id: w }) });
         const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`);
         label.textContent = d.status === 'account_verified' ? `Verified Testnet account: ${d.wallet} (${d.rpc.balance_near} NEAR)` : `Testnet account not verified: ${d.rpc.status || d.status}`;
       } catch (error) { label.textContent = `Testnet account check failed: ${error.message}`; }
@@ -209,7 +221,7 @@
     async function runScan() {
       const payload = { agent_id: document.getElementById('agentSel').value, recipient: document.getElementById('recInput').value.trim(), amount_near: parseFloat(document.getElementById('amtInput').value), prompt: document.getElementById('prmInput').value.trim() };
       try {
-        const res = await fetch(API + '/api/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const res = await apiFetch('/api/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`); showDecision(d); await syncState();
       } catch (e) { document.getElementById('verdictTxt').textContent = `Backend request failed: ${e.message}`; }
     }
@@ -226,29 +238,30 @@
 
     async function savePolicy() {
       const payload = { max_single_tx_near: parseFloat(document.getElementById('sMax').value), hitl_threshold_near: parseFloat(document.getElementById('sHitl').value), block_prompt_injection: document.getElementById('cInj').checked, velocity_guard_enabled: document.getElementById('cVel').checked, strict_whitelist_mode: document.getElementById('cWht').checked, telegram_alerts_enabled: document.getElementById('cTg').checked };
-      await fetch(API + '/api/policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      await apiFetch('/api/policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       alert('✅ HyperOS Security Policy Applied!');
     }
 
     async function toggleFreeze(agentId, frozen) {
-      await fetch(API + '/api/agent/freeze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent_id: agentId, frozen: frozen }) });
+      await apiFetch('/api/agent/freeze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent_id: agentId, frozen: frozen }) });
       await syncState();
     }
 
     async function addWallet() {
       const wallet = document.getElementById('newWalletInput').value.trim(), list_type = document.getElementById('listTypeSel').value;
       if (!wallet) return;
-      await fetch(API + '/api/wallets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ list_type: list_type, action: 'add', wallet: wallet }) });
+      await apiFetch('/api/wallets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ list_type: list_type, action: 'add', wallet: wallet }) });
       document.getElementById('newWalletInput').value = ''; await syncState();
     }
 
     async function hitlAction(tx_id, action) {
-      const res = await fetch(API + '/api/hitl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tx_id: tx_id, action: action }) });
+      const res = await apiFetch('/api/hitl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tx_id: tx_id, action: action }) });
       const d = await res.json(); if (!res.ok) throw new Error(d.detail || `API ${res.status}`); showDecision(d); await syncState();
     }
     async function syncState() {
       try {
-        const res = await fetch(API + '/api/state');
+        const res = await apiFetch('/api/state');
+        if (!res.ok) throw new Error(res.status === 401 ? 'Admin token was rejected.' : `API ${res.status}`);
         const st = await res.json();
         cachedState = st;
 
@@ -294,7 +307,9 @@
             return '<tr><td class="mono">' + escapeHtml(l.timestamp) + '<br><span style="color:var(--muted);font-size:10px">' + escapeHtml(l.tx_id) + '</span></td><td><strong>' + escapeHtml(l.agent_id) + '</strong></td><td class="mono" style="color:var(--cyan)">' + escapeHtml(l.recipient) + '<br><strong style="color:#fff">' + escapeHtml(l.amount_near) + ' NEAR</strong></td><td style="font-weight:800;color:' + (l.risk_score >= 70 ? 'var(--red)' : 'var(--green)') + '">' + escapeHtml(l.risk_score) + '/100</td><td>' + badge + '</td><td class="mono" style="font-size:11px;color:var(--muted)">' + escapeHtml(String(l.audit_hash || '').slice(0, 16)) + '...' + expLink + '</td></tr>';
           }).join('');
         }
-      } catch (e) {}
+      } catch (e) {
+        document.getElementById('legacyAuthStatus').textContent = e.message;
+      }
     }
 
     function exportReport() {
@@ -306,6 +321,15 @@
       a.click();
     }
 
+    document.getElementById('legacyAuthButton').addEventListener('click', () => {
+      const field = document.getElementById('legacyAdminToken');
+      adminToken = field.value.trim();
+      field.value = '';
+      document.getElementById('legacyAuthStatus').textContent = adminToken
+        ? 'Token held in memory for this tab.'
+        : 'Admin token cleared.';
+      syncState();
+    });
     syncState();
   </script>
 </body>

@@ -22,8 +22,9 @@ kept as a compatible installer alias.
 
 ## Configure and start
 
-The local demo uses `agentguard-local-demo-token` when no token is configured. Set
-your own token in the shell, then launch the combined app:
+No default admin token is shipped. Admin-only v4 actions and all sensitive legacy v1/v2/v3
+`/api/...` routes fail closed until a token is configured. Set a unique token
+in the server shell, then launch the combined app:
 
 ```powershell
 $env:AGENTGUARD_ADMIN_TOKEN = 'use-a-long-random-value-for-this-local-session'
@@ -59,7 +60,7 @@ This binds to loopback. Keep it that way for the demo. The v4 dashboard is at `h
 | `AGENTGUARD_ENVIRONMENT` | `development` | Displayed environment label. |
 | `AGENTGUARD_DATABASE_URL` | `backend/agentguard_foundation.db` | SQLite database file. The default is independent of working directory; relative override paths resolve from the process working directory. Other dialects are rejected. |
 | `AGENTGUARD_LOG_LEVEL` | `INFO` | Structured log threshold. |
-| `AGENTGUARD_ADMIN_TOKEN` | `agentguard-local-demo-token` | Bearer token for operator actions. Override it with a unique secret outside local demos. |
+| `AGENTGUARD_ADMIN_TOKEN` | unset | Required bearer token for operator actions and sensitive legacy v1/v2/v3 routes; protected actions return `503` until configured. |
 | `AGENTGUARD_NEAR_TESTNET_RPC_URL` | `https://rpc.testnet.near.org` | HTTPS Testnet JSON-RPC URL; HTTP is accepted only for localhost. |
 | `AGENTGUARD_NEAR_RPC_TIMEOUT_SECONDS` | `5` | Must be from 0.1 to 60 seconds. |
 | `AGENTGUARD_NEAR_SENDER_ACCOUNT` | Provisioned AgentGuard Testnet account | Account ID to monitor and use as the isolated sender. |
@@ -71,7 +72,7 @@ This binds to loopback. Keep it that way for the demo. The v4 dashboard is at `h
 | `AGENTGUARD_TELEGRAM_BOT_TOKEN` | unset | Optional server-only Telegram bot token. |
 | `AGENTGUARD_TELEGRAM_CHAT_ID` | unset | Optional destination chat; alerts remain disabled unless both Telegram settings are configured. |
 
-The settings endpoint never returns the RPC URL or admin token. The default token is for loopback demos only; set a unique secret before any shared deployment. Use a fresh shell and do not paste secrets into screenshots or source files.
+The settings endpoint never returns the RPC URL or admin token. Use a fresh shell and do not paste secrets into screenshots or source files. Keep the app on loopback for demos; the shared-token model is not production operator identity management.
 
 ## Local routes
 

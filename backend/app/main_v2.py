@@ -5,11 +5,14 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from app.foundation.main import app as v4_api_app
+from app.foundation.legacy_auth import require_legacy_admin
 
 app = FastAPI(title="AgentGuard AI - Enterprise Web3 Firewall", version="2.0.0")
+app.state.admin_token = v4_api_app.state.settings.admin_token
 
 app.add_middleware(
     CORSMiddleware,
@@ -111,7 +114,7 @@ def health_check():
     return {"status": "ONLINE", "engine": "AgentGuard AI v2.0", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
-@app.get("/api/state")
+@app.get("/api/state", dependencies=[Depends(require_legacy_admin)])
 def get_dashboard_state():
     total = len(AUDIT_LOGS)
     approved = sum(1 for x in AUDIT_LOGS if x["decision"] == "APPROVE")
@@ -136,7 +139,7 @@ def get_dashboard_state():
     }
 
 
-@app.post("/api/policy")
+@app.post("/api/policy", dependencies=[Depends(require_legacy_admin)])
 def update_policy(update: PolicyUpdate):
     POLICY_STATE["max_single_tx_near"] = update.max_single_tx_near
     POLICY_STATE["daily_spend_limit_near"] = update.daily_spend_limit_near
@@ -146,7 +149,7 @@ def update_policy(update: PolicyUpdate):
     return {"message": "Security policy updated live", "policy": POLICY_STATE}
 
 
-@app.post("/api/evaluate")
+@app.post("/api/evaluate", dependencies=[Depends(require_legacy_admin)])
 def evaluate_transaction(tx: TransactionRequest):
     tx_id = f"TX-{int(time.time() * 1000) % 1000000}"
     timestamp = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
@@ -233,7 +236,7 @@ def evaluate_transaction(tx: TransactionRequest):
     return record
 
 
-@app.post("/api/hitl")
+@app.post("/api/hitl", dependencies=[Depends(require_legacy_admin)])
 def resolve_human_approval(item: ApprovalAction):
     if item.tx_id not in PENDING_QUEUE:
         raise HTTPException(status_code=404, detail="Transaction not found in pending queue")
