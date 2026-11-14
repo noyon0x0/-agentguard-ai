@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="agentguard-api-base" content="">
+  <meta name="color-scheme" content="dark">
+  <title>AgentGuard AI | NEAR Hackathon 2026</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070b14;--surface:#111a2b;--surface2:#0c1422;--line:#28364b;--cyan:#38bdf8;--green:#10b981;--red:#f43f5e;--amber:#f59e0b;--text:#f1f5f9;--muted:#9aacbf;--shadow:0 14px 40px #0005}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 16% 0,#11203a 0,transparent 40%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button,a,input,select,textarea{outline-offset:3px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan)}a{color:var(--cyan)}.shell{max-width:1600px;margin:auto;padding:20px;display:grid;grid-template-columns:235px minmax(0,1fr);gap:18px}.sidebar{position:sticky;top:18px;align-self:start;max-height:calc(100vh - 36px);overflow:auto;background:#0c1422eF;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.brand{display:flex;gap:11px;align-items:center;padding:4px 2px 18px;border-bottom:1px solid var(--line)}.brand-mark{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#0284c7,#10b981);font-size:22px}.brand h1{font-size:16px;margin:0}.brand p{font-size:11px;margin:2px 0 0;color:var(--muted)}.version{color:var(--cyan);font-weight:800}.nav{display:grid;gap:4px;margin-top:13px}.nav a{padding:8px 10px;border-radius:10px;text-decoration:none;color:#c3d0df;font-size:12px}.nav a:hover,.nav a:focus-visible{background:#17263a;color:#fff}.nav-label{margin:16px 9px 4px;color:#71849c;font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:800}.main{min-width:0}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding:15px 18px;background:#101a2bde;border:1px solid var(--line);border-radius:18px}.topbar h2{font-size:19px;margin:0}.topbar p{font-size:12px;color:var(--muted);margin:2px 0 0}.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.status{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:99px;background:#172337;color:var(--muted);font-size:11px;font-weight:800;border:1px solid var(--line)}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}.info{color:var(--cyan)}.btn{border:1px solid var(--line);border-radius:10px;background:#18263a;color:var(--text);padding:8px 12px;cursor:pointer;font-weight:750;font-size:12px}.btn:hover{filter:brightness(1.15)}.btn-primary{border:0;background:linear-gradient(90deg,#0284c7,#2563eb)}.btn-green{background:#0e392f;border-color:#166c59;color:#8bf0ce}.btn-red{background:#3c1724;border-color:#7e2639;color:#ffadba}.btn-amber{background:#392d16;border-color:#705321;color:#fbd38d}.btn:disabled{opacity:.55;cursor:wait}.page-title{margin:22px 2px 11px;font-size:18px}.page-title small{font-size:11px;color:var(--muted);font-weight:500;margin-left:8px}.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}.card{min-width:0;background:linear-gradient(145deg,#121d2f,#0e1726);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:var(--shadow)}.card h3{font-size:14px;margin:0 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 12px}.metric-label{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.08em;text-transform:uppercase}.metric{font-size:28px;font-weight:850;margin-top:8px;letter-spacing:-.03em}.metric-foot{font-size:11px;color:var(--muted)}.cyan{color:var(--cyan)}.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}.state{padding:10px 12px;border-radius:11px;background:#0a1220;border:1px solid var(--line);color:var(--muted);font-size:12px;margin:8px 0}.state.error{color:#ffc0ca;border-color:#753044;background:#29131d}.state.empty{color:var(--muted)}.state.loading{color:var(--cyan)}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #243248}.row:last-child{border-bottom:0}.row-main{min-width:0}.row-title{font-weight:750;overflow-wrap:anywhere}.row-detail{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.badge{display:inline-flex;border-radius:99px;padding:3px 8px;font-size:10px;font-weight:850;text-transform:uppercase;background:#1c293b;color:var(--muted)}.badge.approve{color:#8bf0ce;background:#0d332b}.badge.review{color:#fbd38d;background:#392d16}.badge.block{color:#ffadba;background:#3c1724}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800;color:#9aacbf}.field input,.field select,.field textarea{width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;background:#080f1b;color:var(--text);padding:10px 11px}.field textarea{min-height:72px;resize:vertical}.field input::placeholder,.field textarea::placeholder{color:#64748b}.field-hint{font-size:10px;color:var(--muted)}.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.inline input{flex:1;min-width:180px}.switch{display:flex;gap:9px;align-items:center;padding:9px 0;color:#d3deea;font-size:12px}.switch input{width:18px;height:18px;accent-color:var(--cyan)}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}caption{text-align:left;color:var(--muted);font-size:11px;padding:0 0 7px}th,td{padding:9px 8px;border-bottom:1px solid #243248;vertical-align:top}th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}td{overflow-wrap:anywhere}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.callout{border-left:3px solid var(--cyan);background:#0c1a29;padding:10px 12px;border-radius:7px;font-size:12px;color:#c3d0df}.callout.warn{border-color:var(--amber)}.callout.danger{border-color:var(--red)}.section{scroll-margin-top:14px;margin-bottom:24px}.hidden{display:none!important}.result{margin-top:12px}.footer-note{color:#71849c;font-size:10px;margin-top:9px}.skip{position:absolute;left:-9999px;top:8px}.skip:focus{left:10px;z-index:4;background:#fff;color:#000;padding:8px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:1050px){.shell{grid-template-columns:190px minmax(0,1fr);padding:13px;gap:12px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:760px){.shell{display:block;padding:10px}.sidebar{position:static;max-height:none;padding:11px;margin-bottom:10px}.brand{padding-bottom:10px}.nav{display:flex;overflow-x:auto;gap:5px;padding:3px 0}.nav-label{display:none}.nav a{white-space:nowrap;border:1px solid var(--line)}.topbar{align-items:flex-start;flex-direction:column}.cols2,.cols3{grid-template-columns:1fr}.page-title{margin-top:20px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+    @media(max-width:430px){.kpis{gap:8px}.metric{font-size:23px}.card{padding:13px}.top-actions{width:100%}.status{font-size:10px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    .state.ok{color:#8bf0ce;border-color:#166c59;background:#0d241f}.state.warn,.state.review{color:#fbd38d;border-color:#705321;background:#2b2416}.state.block{color:#ffadba;border-color:#7e2639;background:#29131d}
+    /* AgentGuard premium night theme */
+    :root{color-scheme:dark;--bg:#050b16;--surface:#0b1524;--surface2:#08111e;--line:rgba(127,164,198,.14);--line-strong:rgba(89,202,231,.27);--cyan:#67d9ef;--green:#55d6a1;--red:#ff7184;--amber:#e6bd76;--text:#e8f0f7;--muted:#8294a8;--shadow:0 18px 55px rgba(0,0,0,.25);--space:16px}
+    html{scroll-padding-top:18px;scroll-behavior:smooth}
+    body{min-height:100vh;overflow-x:hidden;background:radial-gradient(ellipse at 12% -12%,rgba(23,92,129,.18),transparent 39%),radial-gradient(ellipse at 90% 44%,rgba(18,104,88,.09),transparent 36%),#050b16;color:var(--text);font-family:Inter,"Aptos",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.005em}
+    body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.2;background-image:linear-gradient(rgba(92,140,176,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(92,140,176,.045) 1px,transparent 1px);background-size:56px 56px;mask-image:linear-gradient(to bottom,black,transparent 75%)}
+    .ambient{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;contain:strict}
+    .near-watermark{position:absolute;width:min(68vw,860px);height:min(68vw,860px);right:-9vw;top:8vh;opacity:.022;fill:#91e8ef;filter:drop-shadow(0 0 48px rgba(73,208,228,.3));animation:watermark-drift 34s ease-in-out infinite alternate}
+    .ambient::before,.ambient::after{content:"";position:absolute;width:35vw;height:35vw;border-radius:50%;filter:blur(85px);opacity:.09;animation:ambient-drift 22s ease-in-out infinite alternate}
+    .ambient::before{background:#117ba3;left:-18vw;top:32vh}.ambient::after{background:#08734e;right:-16vw;bottom:-18vh;animation-delay:-10s}
+    .light-points{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(128,226,239,.44) 1px,transparent 1.7px),radial-gradient(circle,rgba(72,204,158,.32) 1px,transparent 1.6px);background-size:173px 191px,241px 229px;background-position:23px 36px,109px 71px;opacity:.18;mask-image:linear-gradient(to bottom,black,transparent 70%);animation:points-drift 55s linear infinite}
+    @keyframes watermark-drift{from{transform:translate3d(0,-8px,0) rotate(-2deg)}to{transform:translate3d(-16px,12px,0) rotate(1deg)}}
+    @keyframes ambient-drift{from{transform:translate3d(-3%,0,0) scale(.94)}to{transform:translate3d(4%,3%,0) scale(1.08)}}
+    @keyframes points-drift{to{background-position:23px -140px,109px -120px}}
+    .shell{position:relative;z-index:1;isolation:isolate;max-width:1840px;min-height:100vh;margin:auto;padding:24px 28px;grid-template-columns:232px minmax(0,1fr);gap:24px}
+    .sidebar{top:20px;max-height:calc(100vh - 40px);padding:17px 13px;background:linear-gradient(160deg,rgba(11,23,39,.93),rgba(6,14,25,.9));border:1px solid var(--line);border-radius:18px;box-shadow:0 22px 65px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.025);backdrop-filter:blur(18px)}
+    .brand{gap:11px;padding:4px 5px 17px;border-color:rgba(136,170,198,.12)}
+    .brand-mark{width:38px;height:38px;flex:none;border:1px solid rgba(102,217,239,.28);border-radius:12px;background:linear-gradient(145deg,rgba(25,83,109,.72),rgba(8,30,43,.78));box-shadow:0 0 25px rgba(61,190,218,.13),inset 0 1px rgba(255,255,255,.08);color:#e9fbff}
+    .brand-near{width:24px;height:24px;fill:currentColor}
+    .brand h1{font-size:14px;letter-spacing:.01em}.brand p{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:#6f879b}
+    .version{margin-left:3px;font-size:10px;color:#8de5ef;font-weight:700}
+    .nav{gap:3px;margin-top:15px}.nav-label{margin:15px 10px 6px;color:#5f7488;font-size:9px;letter-spacing:.15em}
+    .nav a{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid transparent;border-radius:9px;color:#91a4b7;font-size:11px;transition:background .22s,border-color .22s,color .22s,transform .22s}
+    .nav a svg{width:15px;height:15px;flex:none;stroke:currentColor;fill:none;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+    .nav a:hover{transform:translateX(2px);color:#dcebf4;background:rgba(34,64,88,.32);border-color:rgba(137,185,214,.08)}
+    .nav a[aria-current="location"]{color:#c9f4f6;background:linear-gradient(90deg,rgba(35,121,147,.18),rgba(24,53,72,.18));border-color:rgba(92,203,222,.16);box-shadow:inset 2px 0 #6cd7e6,0 0 22px rgba(49,174,198,.06)}
+    .nav a[aria-current="location"] svg{color:#70dce8;opacity:1}
+    .main{padding-bottom:36px}
+    .topbar{position:sticky;top:12px;z-index:5;min-height:84px;margin:0 0 19px;padding:15px 19px;background:rgba(8,18,31,.84);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 45px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(18px)}
+    .topbar h2{font-size:18px;letter-spacing:-.025em;font-weight:650}.topbar p{font-size:11px;color:#8094a7}
+    .topbar-title{min-width:220px}.topbar-title .eyebrow{margin-bottom:2px}
+    .eyebrow{display:flex;align-items:center;gap:7px;color:#72bdcb;font-size:9px;font-weight:750;letter-spacing:.15em;text-transform:uppercase}
+    .top-actions{gap:7px}.status{padding:7px 10px;background:rgba(13,28,44,.76);border-color:rgba(127,164,198,.14);color:#95a9bb;font-size:10px;font-weight:650;letter-spacing:.01em}
+    .dot{width:6px;height:6px;box-shadow:0 0 9px currentColor}.status.ok .dot{animation:status-breathe 3s ease-in-out infinite}
+    @keyframes status-breathe{50%{box-shadow:0 0 14px currentColor;opacity:.72}}
+    .btn{min-height:34px;padding:8px 12px;border-radius:8px;background:rgba(20,37,55,.8);border-color:rgba(126,168,198,.2);font-size:11px;font-weight:650;transition:transform .2s,border-color .2s,background .2s,box-shadow .2s}
+    .btn:hover{filter:none;transform:translateY(-1px);border-color:rgba(103,217,239,.42);background:#142b3d;box-shadow:0 5px 18px rgba(0,0,0,.18)}
+    .btn-primary{background:linear-gradient(105deg,#12647d,#167b88);border:1px solid rgba(110,225,235,.28);box-shadow:0 4px 20px rgba(21,124,145,.14)}
+    .btn-primary:hover{background:linear-gradient(105deg,#16738d,#198d96);box-shadow:0 0 24px rgba(79,207,222,.17)}
+    .btn-green{background:rgba(13,64,49,.72);border-color:rgba(78,211,160,.28);color:#8de7c1}.btn-green:hover{box-shadow:0 0 20px rgba(76,210,158,.13)}
+    .btn-red{background:rgba(74,27,40,.72);border-color:rgba(255,113,132,.25);color:#ffacb7}.btn-red:hover{box-shadow:0 0 20px rgba(255,87,116,.12)}
+    .section{scroll-margin-top:112px;margin-bottom:29px}.page-title{display:flex;align-items:baseline;gap:10px;margin:22px 2px 11px;font-size:16px;font-weight:650;letter-spacing:-.02em}
+    .page-title small{margin:0;color:#73879a;font-size:10px;letter-spacing:0}
+    .grid{gap:13px}.kpis{gap:12px;margin-bottom:12px}.card{position:relative;overflow:hidden;padding:16px 17px;background:linear-gradient(145deg,rgba(13,25,41,.94),rgba(8,17,29,.94));border:1px solid rgba(128,165,194,.13);border-radius:13px;box-shadow:0 14px 34px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.032);transition:transform .24s,border-color .24s,box-shadow .24s;backdrop-filter:blur(12px)}
+    .card::before{content:"";position:absolute;inset:0 15% auto;height:1px;background:linear-gradient(90deg,transparent,rgba(152,217,232,.15),transparent);pointer-events:none}
+    .card:hover{transform:translateY(-2px);border-color:rgba(103,176,207,.24);box-shadow:0 18px 42px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.045)}
+    .kpis .card{min-height:112px;display:flex;flex-direction:column;justify-content:space-between;padding:16px 18px}
+    .kpis .card:nth-child(1){background:linear-gradient(145deg,rgba(13,35,52,.97),rgba(8,18,31,.96));border-color:rgba(89,196,218,.2)}
+    .metric-label{color:#7f94a7;font-size:9px;letter-spacing:.13em}.metric{margin-top:6px;font-size:29px;line-height:1.08;font-weight:650;letter-spacing:-.045em;font-variant-numeric:tabular-nums}.metric-foot{margin-top:8px;color:#6f8396;font-size:10px}
+    .cyan{color:#75d9e8;text-shadow:0 0 23px rgba(65,198,220,.16)}.green{color:#67d7a9;text-shadow:0 0 20px rgba(67,202,147,.14)}.red{color:#ff8190;text-shadow:0 0 20px rgba(244,73,104,.12)}.amber{color:#e6c47f}
+    .card h3{font-size:12px;font-weight:650;letter-spacing:.005em}.sub{margin-bottom:12px;color:#7e91a4;font-size:10px;line-height:1.55}
+    .state{padding:9px 11px;background:rgba(4,12,21,.65);border-color:rgba(125,161,188,.13);border-radius:8px;color:#91a3b5;font-size:10px}
+    .state.ok{color:#92e5c3;border-color:rgba(73,195,145,.22);background:rgba(11,46,37,.4)}.state.block,.state.error{color:#ff9ca7;border-color:rgba(232,83,105,.24);background:rgba(59,20,30,.4)}.state.review,.state.warn{color:#e8cc8f;border-color:rgba(199,157,72,.24);background:rgba(51,39,17,.42)}
+    .row{padding:10px 0;border-color:rgba(130,163,189,.1)}.row-title{font-size:11px;font-weight:650}.row-detail{font-size:10px;line-height:1.55;color:#7f93a6}.badge{padding:4px 8px;border:1px solid rgba(129,162,186,.1);background:rgba(20,34,49,.78);font-size:9px;letter-spacing:.045em}.badge.approve{color:#7bdfb6;background:rgba(9,57,42,.55);border-color:rgba(80,202,155,.14)}.badge.review{color:#e7c87f;background:rgba(62,47,20,.58);border-color:rgba(210,174,89,.16)}.badge.block{color:#ff8897;background:rgba(68,25,36,.6);border-color:rgba(235,91,116,.16)}
+    .field label{color:#9aabba;font-size:9px;letter-spacing:.11em}.field input,.field select,.field textarea{padding:10px 11px;border-color:rgba(126,163,190,.18);border-radius:8px;background:rgba(4,12,21,.78);transition:border-color .2s,box-shadow .2s}.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(103,217,239,.55);box-shadow:0 0 0 3px rgba(54,183,206,.09)}.field textarea{min-height:82px}
+    .callout{background:rgba(10,34,48,.62);border-left-color:#50bdce;color:#b7cbd7;font-size:10px}
+    table{font-size:10px}th,td{padding:10px 8px;border-color:rgba(130,163,189,.11)}th{color:#778da1;font-size:9px;letter-spacing:.1em}caption{color:#74889b;font-size:10px}
+    .footer-note{color:#677d91;font-size:9px}.skip{z-index:20}.skip:focus{border-radius:6px}
+    .overview-state{margin:7px 0 12px;padding:6px 9px;border:0;background:transparent;font-size:10px}
+    .overview-lower{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(255px,.8fr);gap:13px}
+    .network-card{padding:17px 19px 14px}.network-head,.activity-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.network-head h3,.activity-head h3{margin:4px 0 0;font-size:13px}
+    .network-label{display:inline-flex;align-items:center;gap:7px;color:#93a8ba;font-size:9px;white-space:nowrap}.live-cue{width:6px;height:6px;border-radius:50%;background:#56d5a2;box-shadow:0 0 11px rgba(86,213,162,.7)}
+    .network-map{position:relative;min-height:218px;margin:10px 0 8px;display:grid;grid-template-columns:minmax(0,1fr) 126px minmax(0,1fr);grid-template-rows:1fr 1fr 1fr;align-items:center;gap:6px 12px;isolation:isolate}
+    .network-map::before{content:"";position:absolute;z-index:-2;width:170px;height:170px;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(44,166,188,.11),rgba(23,103,127,.035) 48%,transparent 72%)}
+    .network-lines{position:absolute;inset:2% 5%;z-index:-1;width:90%;height:96%;overflow:visible}
+    .network-lines path{fill:none;stroke:rgba(89,184,205,.25);stroke-width:1;vector-effect:non-scaling-stroke}
+    .network-lines .orbit{stroke:rgba(79,192,208,.13);stroke-dasharray:2 8;animation:orbit-flow 28s linear infinite}
+    .network-lines .signal{stroke:rgba(105,230,222,.46);stroke-width:1.3;stroke-dasharray:3 18;animation:signal-flow 8s linear infinite}
+    @keyframes signal-flow{to{stroke-dashoffset:-84}}@keyframes orbit-flow{to{stroke-dashoffset:-90}}
+    .network-hub{grid-column:2;grid-row:2;justify-self:center;display:flex;width:92px;height:92px;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid rgba(100,215,226,.3);border-radius:50%;background:radial-gradient(circle at 50% 32%,rgba(30,97,114,.54),rgba(8,25,39,.97) 72%);box-shadow:0 0 0 8px rgba(41,152,169,.035),0 0 36px rgba(43,169,192,.14),inset 0 1px rgba(255,255,255,.09);animation:hub-breathe 6s ease-in-out infinite}
+    @keyframes hub-breathe{50%{box-shadow:0 0 0 12px rgba(41,152,169,.025),0 0 43px rgba(43,169,192,.2),inset 0 1px rgba(255,255,255,.09)}}
+    .hub-mark{width:31px;height:31px;fill:#e0fbfb;opacity:.94}.network-hub strong{font-size:9px;letter-spacing:.15em}.network-hub span{font-size:8px;color:#82a1b3;letter-spacing:.06em}
+    .network-agents{display:contents}.network-node{z-index:1;display:grid;grid-template-columns:7px minmax(0,1fr);column-gap:8px;align-items:center;min-width:0;max-width:190px;padding:8px 10px;border:1px solid rgba(127,169,192,.15);border-radius:9px;background:linear-gradient(135deg,rgba(14,30,46,.95),rgba(8,17,29,.92));box-shadow:0 8px 20px rgba(0,0,0,.14);transition:border-color .2s,transform .2s}
+    .network-node:hover{transform:translateY(-1px);border-color:rgba(90,209,218,.35)}.network-node:nth-of-type(1){grid-column:1;grid-row:1}.network-node:nth-of-type(2){grid-column:3;grid-row:1;justify-self:end}.network-node:nth-of-type(3){grid-column:1;grid-row:2}.network-node:nth-of-type(4){grid-column:3;grid-row:2;justify-self:end}.network-node:nth-of-type(5){grid-column:2;grid-row:3;justify-self:center}.network-node:nth-of-type(n+6){display:none}.agent-details{display:grid;min-width:0;gap:2px}
+    .agent-light{grid-row:1/3;width:6px;height:6px;border-radius:50%;background:#50d4a0;box-shadow:0 0 10px rgba(80,212,160,.55)}.network-node.frozen .agent-light{background:#ff7184;box-shadow:0 0 10px rgba(255,113,132,.5)}
+    .agent-name{overflow:hidden;color:#c4d2de;font-size:9px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.agent-meta{color:#73889b;font-size:8px;white-space:nowrap}
+    .network-footer{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:9px;padding-top:11px;border-top:1px solid rgba(127,164,190,.1)}.network-stat{min-width:0}.network-stat .metric-label{display:block;margin-bottom:4px}.network-stat .state{margin:0;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.network-stat .callout{padding:5px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .activity-panel{padding:17px 17px 12px}.activity-head{padding-bottom:11px;border-bottom:1px solid rgba(127,164,190,.1)}.activity-head p{margin:3px 0 0;color:#72889c;font-size:9px}.activity-feed{position:relative;display:grid;align-content:start;max-height:238px;overflow:auto;padding:4px 2px 2px 0}.activity-feed:empty::before{content:"No persisted activity yet";padding:15px 0;color:#71869a;font-size:10px}.activity-item{position:relative;display:grid;grid-template-columns:11px minmax(0,1fr);gap:9px;padding:9px 0;border-bottom:1px solid rgba(127,164,190,.08)}.activity-item:last-child{border-bottom:0}.activity-rail{position:relative;display:flex;justify-content:center}.activity-rail::after{content:"";position:absolute;top:9px;bottom:-10px;width:1px;background:rgba(128,162,186,.16)}.activity-item:last-child .activity-rail::after{display:none}.activity-dot{z-index:1;width:7px;height:7px;margin-top:4px;border-radius:50%;background:#e1bb6d;box-shadow:0 0 9px rgba(225,187,109,.26)}.activity-item.approve .activity-dot{background:#56d5a2;box-shadow:0 0 9px rgba(86,213,162,.32)}.activity-item.block .activity-dot{background:#ff7184;box-shadow:0 0 9px rgba(255,113,132,.28)}.activity-title{display:flex;justify-content:space-between;gap:8px;color:#bdcbd7;font-size:9px;font-weight:600}.activity-title time{flex:none;color:#71869a;font-size:8px;font-weight:450}.activity-detail{margin-top:3px;color:#73899d;font-size:8px;overflow-wrap:anywhere}
+    .agents-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:26px}.agents-list .row{min-width:0}.agents-list .row-main{overflow:hidden}.agents-list .actions{flex-wrap:nowrap}.agents-list .btn{min-height:29px;padding:6px 9px}
+    #threat-blocks .row{align-items:flex-start}.table-wrap{border:1px solid rgba(127,164,190,.1);border-radius:9px}table{min-width:680px}
+    @media(min-width:1500px){.shell{padding:28px 34px;grid-template-columns:244px minmax(0,1fr);gap:27px}.topbar{margin-bottom:22px}.kpis .card{min-height:122px;padding:18px 21px}.metric{font-size:32px}.network-map{min-height:240px}.network-card,.activity-panel{padding:20px 22px}}
+    @media(max-width:1200px){.shell{grid-template-columns:205px minmax(0,1fr);padding:17px;gap:16px}.overview-lower{grid-template-columns:minmax(0,1.35fr) minmax(235px,.8fr)}.network-map{grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr);gap:5px}.network-hub{width:82px;height:82px}.network-node{padding:7px 8px}.agents-list{column-gap:16px}}
+    @media(max-width:920px){.sidebar{position:relative;top:0;max-height:none}.shell{display:block;padding:14px}.sidebar{margin-bottom:13px}.brand{padding-bottom:12px}.nav{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;padding:4px 0 2px}.nav-label{display:none}.nav a{flex:none;white-space:nowrap;border:1px solid rgba(127,164,198,.1)}.main{min-width:0}.topbar{top:7px}.overview-lower{grid-template-columns:minmax(0,1.3fr) minmax(220px,.8fr)}}
+    @media(max-width:680px){.shell{padding:9px}.sidebar{padding:10px}.brand{padding:2px 2px 10px}.brand-mark{width:34px;height:34px}.brand-near{width:21px;height:21px}.topbar{position:relative;top:auto;align-items:flex-start;flex-direction:column;padding:13px;margin-bottom:13px}.topbar-title{min-width:0}.topbar h2{font-size:16px}.top-actions{width:100%;gap:6px}.top-actions .status{flex:1;justify-content:center}.top-actions #refresh-all{flex:none}.section{margin-bottom:23px}.page-title{margin-top:18px;font-size:15px}.kpis{gap:8px}.kpis .card{min-height:100px;padding:13px}.metric{font-size:25px}.metric-foot{font-size:9px}.overview-lower{grid-template-columns:1fr}.network-map{min-height:230px;grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr);gap:5px}.network-hub{width:74px;height:74px}.hub-mark{width:25px;height:25px}.network-node{max-width:100%;padding:7px 6px;column-gap:6px}.agent-name{font-size:8px}.network-footer{grid-template-columns:1fr 1fr}.network-stat:last-child{grid-column:1/-1}.activity-feed{max-height:220px}.agents-list{grid-template-columns:1fr}.cols2,.cols3{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.inline{align-items:stretch}.inline input{min-width:0}.table-wrap{max-width:calc(100vw - 42px)}}
+    @media(max-width:390px){.kpis{grid-template-columns:1fr 1fr}.metric{font-size:22px}.network-map{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);min-height:220px;column-gap:3px}.network-hub{width:66px;height:66px}.network-label{font-size:8px}.status{padding:6px 7px}}
+    @media(prefers-reduced-motion:reduce){.near-watermark,.ambient::before,.ambient::after,.light-points,.network-hub,.network-lines .orbit,.network-lines .signal,.status.ok .dot{animation:none!important}.card,.btn,.nav a,.network-node{transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"><div class="light-points"></div><svg class="near-watermark" viewBox="32 32 96 96" focusable="false"><path d="M108.24,40.57,89.42,68.5a2,2,0,0,0,3,2.63l18.52-16a.74.74,0,0,1,1.24.56v50.29a.75.75,0,0,1-1.32.48l-56-67A9.59,9.59,0,0,0,47.54,36H45.59A9.59,9.59,0,0,0,36,45.59v70.82A9.59,9.59,0,0,0,45.59,126h0a9.59,9.59,0,0,0,8.17-4.57L72.58,93.5a2,2,0,0,0-3-2.63l-18.52,16a.74.74,0,0,1-1.24-.56V56.07a.75.75,0,0,1,1.32-.48l56,67a9.59,9.59,0,0,0,7.33,3.4h2a9.59,9.59,0,0,0,9.59-9.59V45.59A9.59,9.59,0,0,0,116.41,36h0A9.59,9.59,0,0,0,108.24,40.57Z"/></svg></div>
+  <a class="skip" href="#main-content">Skip to main content</a>
+  <div class="shell">
+    <aside class="sidebar" aria-label="AgentGuard navigation">
+      <div class="brand"><div class="brand-mark" aria-hidden="true"><svg class="brand-near" viewBox="32 32 96 96" focusable="false"><path d="M108.24,40.57,89.42,68.5a2,2,0,0,0,3,2.63l18.52-16a.74.74,0,0,1,1.24.56v50.29a.75.75,0,0,1-1.32.48l-56-67A9.59,9.59,0,0,0,47.54,36H45.59A9.59,9.59,0,0,0,36,45.59v70.82A9.59,9.59,0,0,0,45.59,126h0a9.59,9.59,0,0,0,8.17-4.57L72.58,93.5a2,2,0,0,0-3-2.63l-18.52,16a.74.74,0,0,1-1.24-.56V56.07a.75.75,0,0,1,1.32-.48l56,67a9.59,9.59,0,0,0,7.33,3.4h2a9.59,9.59,0,0,0,9.59-9.59V45.59A9.59,9.59,0,0,0,116.41,36h0A9.59,9.59,0,0,0,108.24,40.57Z"/></svg></div><div><h1>AgentGuard <span class="brand-ai">AI</span> <span class="version">NEAR Hackathon 2026</span></h1><p>Security operations</p></div></div>
+      <nav class="nav" aria-label="Security centers">
+        <div class="nav-label">Operations</div>
+        <a href="#overview"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 13h7v8H3z"/></svg><span>Overview</span></a><a href="#agents"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5"/></svg><span>AI Agent Management</span></a><a href="#threats"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 21 7v5c0 5-3.8 8-9 10-5.2-2-9-5-9-10V7z"/><path d="M12 8v5M12 16h.01"/></svg><span>Threat Intelligence</span></a>
+        <a href="#policy"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg><span>Security Policy</span></a><a href="#transactions"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h15l-3-3M20 17H5l3 3M19 7l-3 3M5 17l3-3"/></svg><span>Transaction Security</span></a><a href="#approvals"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Human Approvals</span></a>
+        <div class="nav-label">Response & forensics</div>
+        <a href="#near"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19V5l14 14V5M5 12l7 7"/></svg><span>NEAR Testnet Monitor</span></a><a href="#simulation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m13 2-3 8h7l-6 12 2-9H6z"/></svg><span>Attack Simulation Lab</span></a><a href="#audit"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h8l4 4v14H7zM15 3v5h4M10 12h6M10 16h6"/></svg><span>Audit & Forensics</span></a>
+        <a href="#emergency"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10M7 7a8 8 0 1 0 10 0"/></svg><span>Emergency Response</span></a><a href="#telegram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m3 11 18-7-7 17-3-7zM11 14 21 4"/></svg><span>Telegram Monitoring</span></a><a href="#settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.5 2.6-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-3l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.5-2.6 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.5-2.6 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h3l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.5 2.6-1.4 1.1a7 7 0 0 1 0 1.8z"/></svg><span>System Settings</span></a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main-content">
+      <header class="topbar">
+        <div class="topbar-title"><div class="eyebrow"><span class="live-cue"></span> AI SECURITY <span aria-hidden="true">/</span> NEAR TESTNET</div><h2>Security Operations Center</h2><p>Policy oversight for autonomous agents ? read-only network monitor</p></div>
+        <div class="top-actions">
+          <span id="api-status" class="status" title="Backend API status" role="status" aria-live="polite"><span class="dot"></span>API: Checking</span>
+          <span id="rpc-status" class="status" title="NEAR Testnet RPC status" role="status" aria-live="polite"><span class="dot"></span>NEAR RPC: Checking</span>
+          <button id="refresh-all" class="btn" type="button"><span aria-hidden="true">?</span> Refresh</button>
+        </div>
+      </header>
+
+      <section class="section" id="overview" aria-labelledby="overview-title">
+        <h2 class="page-title" id="overview-title">Overview Dashboard <small>Persisted backend totals</small></h2>
+        <div id="overview-state" class="state loading overview-state" role="status" aria-live="polite">Loading overview from API…</div>
+        <div class="grid kpis">
+          <article class="card"><div class="metric-label">Evaluations</div><div class="metric cyan" id="metric-total">—</div><div class="metric-foot">Recorded policy requests</div></article>
+          <article class="card"><div class="metric-label">Approved</div><div class="metric green" id="metric-approved">—</div><div class="metric-foot">Policy decisions only; no execution</div></article>
+          <article class="card"><div class="metric-label">Blocked</div><div class="metric red" id="metric-blocked">—</div><div class="metric-foot">Recorded security blocks</div></article>
+          <article class="card"><div class="metric-label">Human review</div><div class="metric amber" id="metric-review">—</div><div class="metric-foot">Currently awaiting decision</div></article>
+        </div>
+        <div class="overview-lower">
+          <article class="card network-card">
+            <div class="network-head"><div><div class="eyebrow">Security topology</div><h3>Agent trust network</h3></div><span class="network-label"><span class="live-cue"></span> Registered agents ? live state</span></div>
+            <div class="network-map" role="group" aria-label="Security hub linked to registered agents">
+              <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="orbit" d="M50 50 C36 22 25 18 9 16M50 50 C65 22 76 18 91 16M50 50 C36 75 25 82 9 86M50 50 C67 76 78 82 91 86M50 50 C50 67 50 80 50 94"/><path class="signal" d="M50 50 C36 22 25 18 9 16M50 50 C65 22 76 18 91 16M50 50 C36 75 25 82 9 86M50 50 C67 76 78 82 91 86M50 50 C50 67 50 80 50 94"/><circle cx="50" cy="50" r="34" class="orbit"/></svg>
+              <div id="network-agents" class="network-agents" aria-live="polite"></div>
+              <div class="network-hub"><svg class="hub-mark" viewBox="32 32 96 96" aria-hidden="true" focusable="false"><path d="M108.24,40.57,89.42,68.5a2,2,0,0,0,3,2.63l18.52-16a.74.74,0,0,1,1.24.56v50.29a.75.75,0,0,1-1.32.48l-56-67A9.59,9.59,0,0,0,47.54,36H45.59A9.59,9.59,0,0,0,36,45.59v70.82A9.59,9.59,0,0,0,45.59,126h0a9.59,9.59,0,0,0,8.17-4.57L72.58,93.5a2,2,0,0,0-3-2.63l-18.52,16a.74.74,0,0,1-1.24-.56V56.07a.75.75,0,0,1,1.32-.48l56,67a9.59,9.59,0,0,0,7.33,3.4h2a9.59,9.59,0,0,0,9.59-9.59V45.59A9.59,9.59,0,0,0,116.41,36h0A9.59,9.59,0,0,0,108.24,40.57Z"/></svg><strong>NEAR</strong><span>read-only hub</span></div>
+            </div>
+            <div class="network-footer">
+              <div class="network-stat"><span class="metric-label">API connection</span><div id="api-detail" class="state loading">Checking API?</div><p id="overview-last" class="footer-note">Latest evaluation: not loaded</p></div>
+              <div class="network-stat"><span class="metric-label">RPC status</span><div id="rpc-inline" class="state loading">Verifying Testnet</div></div>
+              <div class="network-stat"><span class="metric-label">Execution boundary</span><div id="execution-state" class="callout">Checking backend execution settings?</div></div>
+            </div>
+          </article>
+          <article class="card activity-panel"><div class="activity-head"><div><div class="eyebrow">Persisted evidence</div><h3>Recent activity</h3><p>Latest decision and review events</p></div><span class="network-label">SQLite</span></div><div id="activity-feed" class="activity-feed" aria-live="polite"></div></article>
+        </div>
+      </section>
+
+      <section class="section" id="agents" aria-labelledby="agents-title">
+        <h2 class="page-title" id="agents-title">AI Agent Management</h2>
+        <article class="card"><p class="sub">Registered agent states and evaluation counts from SQLite.</p><div id="agents-state" class="state loading">Loading agents…</div><div id="agents-list" class="agents-list"></div></article>
+      </section>
+
+      <section class="section" id="threats" aria-labelledby="threats-title">
+        <h2 class="page-title" id="threats-title">Threat Intelligence Center</h2>
+        <div class="grid cols2">
+          <article class="card"><h3>Active local detections</h3><p class="sub">Rules loaded in the deterministic backend policy engine. No external threat feed is connected.</p><div id="threat-rules-state" class="state loading">Loading rules…</div><div id="threat-rules"></div></article>
+          <article class="card"><h3>Recent blocked evaluations</h3><p class="sub">Evidence from recorded BLOCK decisions.</p><div id="threat-blocks-state" class="state loading">Loading events…</div><div id="threat-blocks"></div></article>
+        </div>
+      </section>
+
+      <section class="section" id="policy" aria-labelledby="policy-title">
+        <h2 class="page-title" id="policy-title">Security Policy Center</h2>
+        <article class="card"><p class="sub">Policy updates are enforced by the API and require admin authentication.</p><div id="policy-state" class="state loading">Loading policy…</div>
+          <form id="policy-form" class="form-grid">
+            <div class="field"><label for="max-tx">Maximum transaction (NEAR)</label><input id="max-tx" name="max_transaction_near" type="number" min="0.00000001" step="any" required></div>
+            <div class="field"><label for="daily-limit">Daily agent spending limit (NEAR)</label><input id="daily-limit" name="daily_limit_near" type="number" min="0.00000001" step="any" required></div>
+            <div class="field"><label for="review-threshold">Human review above (NEAR)</label><input id="review-threshold" name="review_threshold_near" type="number" min="0" step="any" required></div>
+            <div class="field"><label for="velocity-max">Maximum requests per velocity window</label><input id="velocity-max" name="velocity_max_requests" type="number" min="1" step="1" required></div>
+            <div class="field"><label for="velocity-window">Velocity window (seconds)</label><input id="velocity-window" name="velocity_window_seconds" type="number" min="1" step="1" required></div>
+            <div class="field"><label for="duplicate-window">Duplicate window (seconds)</label><input id="duplicate-window" name="duplicate_window_seconds" type="number" min="1" step="1" required></div>
+            <div class="field"><label for="allowlist">Wallet allowlist (one account per line)</label><textarea id="allowlist" name="allowlist" spellcheck="false"></textarea></div>
+            <div class="field"><label for="blocklist">Wallet blocklist (one account per line)</label><textarea id="blocklist" name="blocklist" spellcheck="false"></textarea></div>
+            <div class="field"><label for="allowed-tools">Allowed tool names (one per line)</label><textarea id="allowed-tools" name="allowed_tools" spellcheck="false"></textarea></div>
+            <div class="field"><label for="allowed-contracts">Approved contract accounts (one per line)</label><textarea id="allowed-contracts" name="allowed_contracts" spellcheck="false"></textarea></div>
+            <div class="field full"><label class="switch" for="prompt-detection"><input id="prompt-detection" type="checkbox"> Prompt injection detection enabled</label><label class="switch" for="velocity-enabled"><input id="velocity-enabled" type="checkbox"> Velocity guard enabled</label></div>
+            <div class="field full"><button class="btn btn-primary" type="submit">Save policy</button><div id="policy-save-state" class="state hidden" role="status" aria-live="polite"></div></div>
+          </form>
+        </article>
+      </section>
+
+      <section class="section" id="transactions" aria-labelledby="transactions-title">
+        <h2 class="page-title" id="transactions-title">Transaction Security Center</h2>
+        <div class="grid cols2">
+          <article class="card"><h3>Evaluate a transaction request</h3><p class="sub">Submits an evaluation request to the backend. It never signs or broadcasts.</p>
+            <form id="evaluation-form" class="form-grid">
+              <div class="field"><label for="agent-id">Agent identity</label><select id="agent-id" required><option value="agent.testnet">agent.testnet</option><option value="DeFi-Trader-Bot">DeFi-Trader-Bot</option><option value="Auto-Payroll-Agent">Auto-Payroll-Agent</option><option value="Marketing-Grant-Bot">Marketing-Grant-Bot</option><option value="External-Plugin-Agent">External-Plugin-Agent</option></select></div>
+              <div class="field"><label for="sender-id">Sender account</label><input id="sender-id" value="agent.testnet" required maxlength="64"></div>
+              <div class="field"><label for="recipient-id">Recipient account</label><input id="recipient-id" value="treasury.testnet" required maxlength="64"></div>
+              <div class="field"><label for="amount-near">Amount (NEAR)</label><input id="amount-near" type="number" min="0.00000001" step="any" value="2.5" required></div>
+              <div class="field"><label for="contract-account">Contract account (optional)</label><input id="contract-account" maxlength="64" placeholder="contract.testnet"></div>
+              <div class="field"><label for="evaluation-network">Evaluation network</label><input id="evaluation-network" value="NEAR Testnet" readonly aria-readonly="true"></div>
+              <div class="field full"><label for="prompt-text">Agent prompt</label><textarea id="prompt-text" maxlength="4000">Execute scheduled treasury payment.</textarea></div>
+              <div class="field full"><label for="memo-text">Memo</label><input id="memo-text" maxlength="512"></div>
+              <div class="field full"><button class="btn btn-primary" type="submit">Evaluate request</button><div id="evaluation-result" class="state empty" role="status" aria-live="polite">No evaluation submitted.</div></div>
+            </form>
+          </article>
+          <article class="card"><h3>Latest evaluation checks</h3><p class="sub">Displayed from the backend response.</p><div id="evaluation-checks" class="state empty">No check results yet.</div></article>
+        </div>
+      </section>
+
+      <section class="section" id="approvals" aria-labelledby="approvals-title">
+        <h2 class="page-title" id="approvals-title">Human Approval Center</h2>
+        <article class="card"><p class="sub">Approvals require an authenticated admin token and revalidate current blocking policies.</p><div id="approvals-state" class="state loading">Loading pending approvals…</div><div id="approvals-list"></div></article>
+      </section>
+
+      <section class="section" id="near" aria-labelledby="near-title">
+        <h2 class="page-title" id="near-title">NEAR Testnet Monitor</h2>
+        <div class="grid cols2">
+          <article class="card"><h3>RPC health</h3><p class="sub">Network identity is verified against the RPC status response.</p><div id="near-health-state" class="state loading">Checking Testnet RPC…</div><button id="near-health-refresh" class="btn" type="button">Check RPC now</button></article>
+          <article class="card"><h3>Account balance and contract lookup</h3><p class="sub">Finalized, read-only account query.</p><form id="near-account-form" class="inline"><label class="sr-only" for="near-account-id">NEAR account ID</label><input id="near-account-id" value="wrap.testnet" maxlength="64" required><button class="btn btn-primary" type="submit">Look up account</button><button id="near-contract-check" class="btn" type="button">Check contract</button><button id="near-access-keys" class="btn" type="button">Inspect access keys</button></form><div id="near-account-result" class="state empty" role="status" aria-live="polite">No account query yet.</div></article>
+          <article class="card"><h3>Verified transaction lookup</h3><p class="sub">Explorer URL appears only if Testnet RPC confirms the transaction hash and signer.</p><form id="near-tx-form" class="form-grid"><div class="field full"><label for="near-tx-hash">Transaction hash</label><input id="near-tx-hash" class="mono" required></div><div class="field full"><label for="near-tx-sender">Sender account ID</label><input id="near-tx-sender" required maxlength="64"></div><div class="field full"><button class="btn btn-primary" type="submit">Verify transaction</button></div></form><div id="near-tx-result" class="state empty" role="status" aria-live="polite">No transaction lookup yet.</div></article>
+        </div>
+        <h3 class="page-title">Testnet Transaction Experiment</h3>
+        <div class="grid cols2">
+          <article class="card"><h3>Configured account and network</h3><p class="sub">Backend-reported RPC state and public account details. Signing credentials remain in the local OS keychain or backend signer.</p><div id="near-experiment-status" class="state loading">Loading Testnet experiment status…</div><button id="near-experiment-refresh" class="btn" type="button">Refresh status</button></article>
+          <article class="card"><h3>Authorized payment</h3><p class="sub">Policy evaluation never signs. ALLOW and approved WARN requests wait for separate explicit confirmation before a capped Testnet transfer.</p><form id="near-experiment-form" class="form-grid"><div class="field full"><label for="experiment-recipient">Recipient</label><input id="experiment-recipient" required maxlength="64"></div><div class="field"><label for="experiment-amount">Amount (NEAR)</label><input id="experiment-amount" type="number" min="0.000000000000000000000001" max="0.01" step="any" value="0.01" required></div><div class="field"><label for="experiment-prompt">Payment context</label><input id="experiment-prompt" maxlength="512" value="Authorized 0.01 NEAR Testnet demo payment"></div><div class="field full"><button class="btn btn-primary" type="submit">Evaluate payment request</button></div></form><div id="near-experiment-result" class="state empty" role="status" aria-live="polite">No Testnet transfer request submitted.</div></article>
+          <article class="card"><h3>Non-broadcasting attack checks</h3><p class="sub">Runs the backend policy engine against generated attacks. These controls never call the signer.</p><div class="actions"><button class="btn near-attack" data-scenario="unauthorized-recipient" type="button">Unauthorized recipient</button><button class="btn near-attack" data-scenario="prompt-injection" type="button">Prompt injection</button><button class="btn near-attack" data-scenario="spending-limit" type="button">Limit bypass</button><button class="btn near-attack" data-scenario="duplicate-replay" type="button">Duplicate replay</button></div><div id="near-attack-results" class="state empty" role="status" aria-live="polite">No Testnet attack checks run yet.</div></article>
+          <article class="card"><h3>Experiment audit history</h3><p class="sub">Persisted Testnet transaction and attack evidence from the backend.</p><button id="near-experiment-history-refresh" class="btn" type="button">Refresh history</button><div id="near-experiment-history" class="state empty" role="status" aria-live="polite">No history loaded.</div></article>
+        </div>
+      </section>
+
+      <section class="section" id="simulation" aria-labelledby="simulation-title">
+        <h2 class="page-title" id="simulation-title">Attack Simulation Lab</h2>
+        <article class="card"><p class="sub">Scenarios invoke the real server-side engine and persist evaluation, test, and audit records. All runs are non-executing.</p>
+          <div class="inline"><button id="run-all-simulations" class="btn btn-primary" type="button">Run all backend scenarios</button><div id="simulation-scorecard" class="state empty" role="status" aria-live="polite">Scorecard not loaded.</div></div>
+          <div id="simulation-state" class="state loading">Loading scenario definitions…</div>
+          <div class="table-wrap"><table><caption>Backend-defined security scenarios</caption><thead><tr><th>Scenario</th><th>Expected</th><th>Test</th></tr></thead><tbody id="simulation-scenarios"></tbody></table></div>
+          <div id="simulation-results" class="grid cols2" aria-live="polite"></div>
+        </article>
+      </section>
+
+      <section class="section" id="audit" aria-labelledby="audit-title">
+        <h2 class="page-title" id="audit-title">Audit &amp; Forensics</h2>
+        <article class="card"><div class="inline" style="justify-content:space-between"><p class="sub">Recent persisted audit events. Full access requires admin authentication.</p><div class="actions"><button id="verify-audit" class="btn" type="button">Verify integrity</button><button id="export-audit" class="btn" type="button">Export JSON</button><button id="export-audit-csv" class="btn" type="button">Export CSV</button></div></div><div id="audit-state" class="state loading">Loading audit records…</div><div id="audit-integrity" class="state empty" role="status" aria-live="polite">Integrity has not been checked.</div><div class="table-wrap"><table><caption>Recent audit events returned by the backend</caption><thead><tr><th>Time</th><th>Request ID</th><th>Event</th><th>Decision</th><th>Details</th></tr></thead><tbody id="audit-rows"></tbody></table></div></article>
+      </section>
+
+      <section class="section" id="emergency" aria-labelledby="emergency-title">
+        <h2 class="page-title" id="emergency-title">Emergency Response Center</h2>
+        <article class="card"><div class="callout danger">The global kill switch blocks all new evaluations. Freezing an agent blocks that agent only. Neither action revokes wallet keys or cancels pending blockchain transactions.</div><div class="inline"><div id="kill-switch-state" class="state loading" role="status" aria-live="polite">Checking global kill switch…</div><button id="kill-switch-toggle" class="btn btn-red" type="button" disabled>Enable global kill switch</button></div><div id="emergency-agents" class="state loading">Loading agent states…</div></article>
+      </section>
+
+      <section class="section" id="telegram" aria-labelledby="telegram-title">
+        <h2 class="page-title" id="telegram-title">Telegram Monitoring</h2>
+        <article class="card"><p class="sub">Optional server-side alerts. Bot credentials remain in backend environment settings.</p><div id="telegram-state" class="state loading">Checking Telegram integration…</div><button id="telegram-test" class="btn" type="button" disabled>Send test notification</button></article>
+      </section>
+
+      <section class="section" id="settings" aria-labelledby="settings-title">
+        <h2 class="page-title" id="settings-title">System Settings</h2>
+        <div class="grid cols2">
+          <article class="card"><h3>Backend configuration</h3><p class="sub">Read-only settings; secrets are never returned.</p><div id="settings-state" class="state loading">Loading settings…</div><dl id="settings-list"></dl></article>
+          <article class="card"><h3>Admin session</h3><p class="sub">Used in memory for protected actions on this page. It is not stored or sent to a settings endpoint.</p><form id="admin-form" class="form-grid"><div class="field full"><label for="admin-token">Admin bearer token</label><input id="admin-token" type="password" autocomplete="off" maxlength="512"></div><div class="field full inline"><button class="btn btn-primary" type="submit">Use for this page session</button><button id="clear-admin" class="btn" type="button">Clear token</button></div><div id="admin-state" class="state empty" role="status" aria-live="polite">No admin token entered.</div></form></article>
+        </div>
+      </section>
+      <p class="footer-note">AgentGuard v4 • API-driven status • Transaction signing and submission disabled.</p>
+    </main>
+  </div>
+  <script>
+    "use strict";
+    // The dashboard and API share an origin in the combined FastAPI app.
+    // Set window.NEAR_HACKATHON_AGENTGUARD_API_BASE before this script only for an explicit override.
+    const apiBaseMeta = document.querySelector('meta[name="agentguard-api-base"]');
+    const API_BASE = (window.NEAR_HACKATHON_AGENTGUARD_API_BASE ?? `${window.location.origin}${apiBaseMeta?.content ?? ""}`).replace(/\/+$/, "");
+    let adminToken = "";
+    let auditCache = [];
+    let activityCache = [];
+    const $ = (id) => document.getElementById(id);
+
+    function node(tag, text, className) {
+      const item = document.createElement(tag);
+      if (text !== undefined && text !== null) item.textContent = String(text);
+      if (className) item.className = className;
+      return item;
+    }
+    function setState(id, message, kind = "empty") {
+      const target = $(id);
+      target.textContent = message;
+      target.className = `state ${kind}`;
+    }
+    function setConnection(id, label, kind) {
+      const target = $(id);
+      target.className = `status ${kind}`;
+      target.replaceChildren(node("span", null, "dot"), document.createTextNode(label));
+    }
+    function setBusy(button, busy, busyText) {
+      if (!button.dataset.label) button.dataset.label = button.textContent;
+      button.disabled = busy;
+      button.textContent = busy ? busyText : button.dataset.label;
+    }
+    function safeError(error) {
+      return error instanceof Error ? error.message : "Request failed";
+    }
+    async function api(path, options = {}) {
+      const { admin = false, timeoutMs = 12000, ...fetchOptions } = options;
+      const headers = new Headers(options.headers || {});
+      if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+      if (admin && adminToken) headers.set("Authorization", `Bearer ${adminToken}`);
+      const response = await fetch(`${API_BASE}${path}`, { ...fetchOptions, headers, signal: AbortSignal.timeout(timeoutMs) });
+      let body;
+      try { body = await response.json(); } catch (_) { body = null; }
+      if (!response.ok) {
+        const detail = body && body.error ? (body.error.message || body.error.code) : "API request failed";
+        throw new Error(`${response.status}: ${detail}`);
+      }
+      return body;
+    }
+    function formatDate(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+    }
+    function decisionBadge(value) {
+      const key = String(value || "").toLowerCase();
+      return node("span", value || "Unknown", `badge ${key}`);
+    }
+    function empty(container, message) { container.replaceChildren(node("div", message, "state empty")); }
+    function renderRows(container, rows, emptyMessage, renderRow) {
+      container.replaceChildren();
+      if (!rows || rows.length === 0) { empty(container, emptyMessage); return; }
+      for (const value of rows) container.append(renderRow(value));
+    }
+
+    async function loadOverview() {
+      setState("overview-state", "Loading overview from API…", "loading");
+      try {
+        const data = await api("/api/v1/overview");
+        $("metric-total").textContent = data.total_requests;
+        $("metric-approved").textContent = data.approved_count;
+        $("metric-blocked").textContent = data.blocked_count;
+        $("metric-review").textContent = data.review_count;
+        $("overview-last").textContent = `Latest evaluation: ${formatDate(data.last_evaluation_at)}`;
+        $("execution-state").textContent = data.execution_enabled === false
+          ? "Signing disabled • transaction submission disabled • evaluation records only"
+          : "Execution state requires operator review";
+        $("execution-state").className = data.execution_enabled === false ? "callout" : "callout danger";
+        setState("overview-state", `Loaded ${data.total_requests} persisted evaluations. Total evaluated amount: ${data.evaluated_amount_near} NEAR.`, "ok");
+        $("api-detail").textContent = `API reachable at ${API_BASE}; values loaded from SQLite-backed API endpoints.`;
+        $("api-detail").className = "state ok";
+        setConnection("api-status", "API: Online", "ok");
+        return true;
+      } catch (error) {
+        for (const id of ["metric-total", "metric-approved", "metric-blocked", "metric-review"]) $(id).textContent = "—";
+        setState("overview-state", safeError(error), "error");
+        setState("api-detail", safeError(error), "error");
+        setConnection("api-status", "API: Offline", "bad");
+        return false;
+      }
+    }
+    function agentRow(agent, emergency = false) {
+      const row = node("div", null, "row");
+      const main = node("div", null, "row-main");
+      main.append(node("div", agent.agent_id, "row-title mono"));
+      main.append(node("div", `${agent.evaluation_count} persisted evaluations • Last: ${formatDate(agent.last_evaluation_at)}`, "row-detail"));
+      const controls = node("div", null, "actions");
+      const button = node("button", agent.frozen ? "Unfreeze" : (emergency ? "Freeze agent" : "Freeze"), `btn ${agent.frozen ? "btn-green" : emergency ? "btn-red" : ""}`);
+      button.type = "button";
+      button.setAttribute("aria-label", `${agent.frozen ? "Unfreeze" : "Freeze"} ${agent.agent_id}`);
+      button.addEventListener("click", () => freezeAgent(agent.agent_id, !agent.frozen));
+      controls.append(node("span", agent.frozen ? "Frozen" : "Active", `badge ${agent.frozen ? "block" : "approve"}`), button);
+      row.append(main, controls);
+      return row;
+    }
+    function renderNetworkAgents(agents) {
+      const target = $("network-agents");
+      target.replaceChildren();
+      for (const agent of agents.slice(0, 5)) {
+        const item = node("div", null, `network-node${agent.frozen ? " frozen" : ""}`);
+        item.title = `${agent.agent_id}: ${agent.frozen ? "frozen" : "active"}; ${agent.evaluation_count} persisted evaluations`;
+        item.append(node("span", null, "agent-light"));
+        const details = node("span", null, "agent-details");
+        details.append(
+          node("span", agent.agent_id, "agent-name"),
+          node("span", `${agent.frozen ? "Frozen" : "Active"} · ${agent.evaluation_count} evaluations`, "agent-meta")
+        );
+        item.append(details);
+        target.append(item);
+      }
+    }
+    async function loadAgents() {
+      setState("agents-state", "Loading agent records…", "loading");
+      try {
+        const agents = await api("/api/v1/agents");
+        renderNetworkAgents(agents);
+        renderRows($("agents-list"), agents, "No registered agents.", (agent) => agentRow(agent));
+        renderRows($("emergency-agents"), agents, "No registered agents.", (agent) => agentRow(agent, true));
+        setState("agents-state", `${agents.length} registered agents from backend state.`, "ok");
+      } catch (error) {
+        setState("agents-state", safeError(error), "error");
+        setState("emergency-agents", safeError(error), "error");
+      }
+    }
+    async function freezeAgent(agentId, frozen) {
+      try {
+        await api(`/api/v1/agents/${encodeURIComponent(agentId)}`, { method: "PUT", admin: true, body: JSON.stringify({ frozen }) });
+        await Promise.all([loadAgents(), loadAudit()]);
+      } catch (error) {
+        setState("agents-state", safeError(error), "error");
+      }
+    }
+    async function loadThreats() {
+      setState("threat-rules-state", "Loading backend rules…", "loading");
+      setState("threat-blocks-state", "Loading persisted block events…", "loading");
+      try {
+        const data = await api("/api/v1/threats");
+        renderRows($("threat-rules"), data.rules, "No local detection rules reported.", (rule) => {
+          const row = node("div", null, "row");
+          const main = node("div", null, "row-main");
+          main.append(node("div", rule.id.replaceAll("_", " "), "row-title"));
+          main.append(node("div", rule.description, "row-detail"));
+          row.append(main, node("span", rule.enabled ? "Enabled" : "Disabled", `badge ${rule.enabled ? "approve" : "review"}`));
+          return row;
+        });
+        renderRows($("threat-blocks"), data.recent_blocks, "No BLOCK evaluations recorded.", (event) => {
+          const row = node("div", null, "row");
+          const main = node("div", null, "row-main");
+          main.append(node("div", `${event.recipient} • ${event.amount_near} NEAR`, "row-title mono"));
+          main.append(node("div", `${event.explanation} • ${formatDate(event.created_at)}`, "row-detail"));
+          row.append(main, node("span", `Risk ${event.risk_score}`, "badge block"));
+          return row;
+        });
+        setState("threat-rules-state", `Rules reported by ${data.source}; external feed: ${data.external_feed_configured ? "configured" : "not configured"}.`, "ok");
+        setState("threat-blocks-state", `${data.recent_blocks.length} persisted block events returned.`, "ok");
+      } catch (error) {
+        setState("threat-rules-state", safeError(error), "error");
+        setState("threat-blocks-state", safeError(error), "error");
+      }
+    }
+    async function loadPolicy() {
+      setState("policy-state", "Loading policy…", "loading");
+      try {
+        const policy = await api("/api/v1/policy");
+        $("max-tx").value = policy.max_transaction_near;
+        $("daily-limit").value = policy.daily_limit_near;
+        $("review-threshold").value = policy.review_threshold_near;
+        $("velocity-max").value = policy.velocity_max_requests;
+        $("velocity-window").value = policy.velocity_window_seconds;
+        $("duplicate-window").value = policy.duplicate_window_seconds;
+        $("allowlist").value = policy.allowlist.join("\n");
+        $("blocklist").value = policy.blocklist.join("\n");
+        $("allowed-tools").value = (policy.allowed_tools || []).join("\n");
+        $("allowed-contracts").value = (policy.allowed_contracts || []).join("\n");
+        $("prompt-detection").checked = policy.prompt_detection_enabled;
+        $("velocity-enabled").checked = policy.velocity_enabled;
+        setState("policy-state", "Policy loaded from backend.", "ok");
+      } catch (error) { setState("policy-state", safeError(error), "error"); }
+    }
+    $("policy-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = event.submitter;
+      setBusy(button, true, "Saving…");
+      const splitList = (id) => $(id).value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+      const payload = {
+        max_transaction_near: Number($("max-tx").value), daily_limit_near: Number($("daily-limit").value),
+        review_threshold_near: Number($("review-threshold").value), velocity_max_requests: Number($("velocity-max").value),
+        velocity_window_seconds: Number($("velocity-window").value), duplicate_window_seconds: Number($("duplicate-window").value),
+        allowlist: splitList("allowlist"), blocklist: splitList("blocklist"),
+        allowed_tools: splitList("allowed-tools"), allowed_contracts: splitList("allowed-contracts"),
+        prompt_detection_enabled: $("prompt-detection").checked, velocity_enabled: $("velocity-enabled").checked
+      };
+      try {
+        await api("/api/v1/policy", { method: "PUT", admin: true, body: JSON.stringify(payload) });
+        setState("policy-save-state", "Policy update confirmed by backend.", "ok");
+        await Promise.all([loadPolicy(), loadThreats(), loadAudit()]);
+      } catch (error) { setState("policy-save-state", safeError(error), "error"); }
+      finally { setBusy(button, false); }
+    });
+
+    function showEvaluation(data, targetId) {
+      const target = $(targetId);
+      const content = node("div");
+      const headline = node("div", null, "inline");
+      headline.append(decisionBadge(data.decision), node("span", `Risk ${data.risk_score}/100`, "mono"));
+      content.append(headline, node("p", data.explanation, "row-detail"), node("div", `Request ID: ${data.request_id}`, "row-detail mono"));
+      target.replaceChildren(content);
+      target.className = `state ${String(data.decision).toLowerCase()}`;
+    }
+    async function submitEvaluation(payload, key) {
+      return api("/api/v1/evaluations", {
+        method: "POST", headers: { "Idempotency-Key": key }, body: JSON.stringify(payload)
+      });
+    }
+    $("evaluation-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = event.submitter;
+      setBusy(button, true, "Evaluating…");
+      const payload = {
+        agent_id: $("agent-id").value, sender: $("sender-id").value.trim(), recipient: $("recipient-id").value.trim(),
+        amount_near: Number($("amount-near").value), network: "testnet", prompt: $("prompt-text").value, memo: $("memo-text").value || null, contract_account: $("contract-account").value.trim() || null
+      };
+      try {
+        const result = await submitEvaluation(payload, `ui-${crypto.randomUUID()}`);
+        showEvaluation(result, "evaluation-result");
+        const checks = $("evaluation-checks"); checks.replaceChildren();
+        for (const [name, value] of Object.entries(result.checks || {})) {
+          const row = node("div", null, "row"); row.append(node("span", name.replaceAll("_", " ")), node("span", value, `badge ${value === "PASS" || value === "NOT_REQUIRED" ? "approve" : value === "FAIL" || value === "FROZEN" ? "block" : "review"}`)); checks.append(row);
+        }
+        checks.className = "state";
+        await refreshData();
+      } catch (error) { setState("evaluation-result", safeError(error), "error"); }
+      finally { setBusy(button, false); }
+    });
+
+    async function loadApprovals() {
+      if (!adminToken) {
+        renderRows($("approvals-list"), [], "Enter the admin token to view pending reviews.");
+        setState("approvals-state", "Admin authentication required to load reviews.", "empty");
+        return;
+      }
+      setState("approvals-state", "Loading pending approvals…", "loading");
+      try {
+        const rows = await api("/api/v1/evaluations/pending", { admin: true });
+        renderRows($("approvals-list"), rows, "No requests are waiting for human review.", (item) => {
+          const row = node("div", null, "row"); const main = node("div", null, "row-main");
+          main.append(node("div", `${item.request_id} • ${item.status}`, "row-title mono"));
+          main.append(node("div", item.explanation, "row-detail"));
+          const actions = node("div", null, "actions");
+          for (const action of ["APPROVE", "REJECT"]) {
+            const button = node("button", action, `btn ${action === "APPROVE" ? "btn-green" : "btn-red"}`);
+            button.type = "button"; button.addEventListener("click", () => resolveApproval(item.request_id, action)); actions.append(button);
+          }
+          row.append(main, actions); return row;
+        });
+        setState("approvals-state", `${rows.length} pending review requests from backend.`, "ok");
+      } catch (error) { setState("approvals-state", safeError(error), "error"); }
+    }
+    async function resolveApproval(requestId, action) {
+      try {
+        const result = await api(`/api/v1/evaluations/${encodeURIComponent(requestId)}/decision`, { method: "POST", admin: true, body: JSON.stringify({ action }) });
+        setState("approvals-state", `Backend recorded ${result.decision} for request ${result.request_id}.`, result.decision === "APPROVE" ? "ok" : "warn");
+        await refreshData();
+      } catch (error) { setState("approvals-state", safeError(error), "error"); }
+    }
+
+    async function checkRpcHealth() {
+      setState("near-health-state", "Checking Testnet RPC…", "loading");
+      setConnection("rpc-status", "NEAR RPC: Checking", "info");
+      try {
+        const data = await api("/api/v1/near/health");
+        setState("near-health-state", `Verified ${data.network} • ${data.latency_ms} ms • checked ${formatDate(data.checked_at)}`, "ok");
+        setState("rpc-inline", `Verified ${data.network} · ${data.latency_ms} ms`, "ok");
+        setConnection("rpc-status", "NEAR RPC: Testnet online", "ok");
+      } catch (error) {
+        setState("near-health-state", safeError(error), "error");
+        setState("rpc-inline", "Testnet RPC unavailable", "error");
+        setConnection("rpc-status", "NEAR RPC: Unavailable", "bad");
+      }
+    }
+    $("near-health-refresh").addEventListener("click", checkRpcHealth);
+    async function lookupAccount(contractOnly = false) {
+      const id = $("near-account-id").value.trim();
+      const target = $("near-account-result");
+      setState("near-account-result", "Querying finalized Testnet account state…", "loading");
+      try {
+        const data = await api(`/api/v1/near/${contractOnly ? "contracts" : "accounts"}/${encodeURIComponent(id)}`);
+        const text = contractOnly
+          ? `${data.account_id}: ${data.is_contract ? "contract code present" : "no contract code"} • ${data.network} • code hash ${data.code_hash}`
+          : `${data.account_id}: ${data.balance_near} NEAR balance • ${data.locked_near} NEAR locked • ${data.is_contract ? "contract account" : "no contract code"} • ${data.network}`;
+        setState("near-account-result", text, data.is_contract || !contractOnly ? "ok" : "warn");
+      } catch (error) { setState("near-account-result", safeError(error), "error"); }
+    }
+    $("near-account-form").addEventListener("submit", (event) => { event.preventDefault(); lookupAccount(false); });
+    $("near-contract-check").addEventListener("click", () => lookupAccount(true));
+    $("near-access-keys").addEventListener("click", async () => {
+      const id = $("near-account-id").value.trim();
+      setState("near-account-result", "Inspecting finalized Testnet access-key permissions…", "loading");
+      try {
+        const data = await api(`/api/v1/near/accounts/${encodeURIComponent(id)}/access-keys`);
+        const scopes = data.keys.map((key) => key.permission?.FunctionCall
+          ? `${key.permission.FunctionCall.receiver_id} methods: ${(key.permission.FunctionCall.method_names || []).join(", ") || "any"}`
+          : "Full-access key");
+        setState("near-account-result", `Verified ${data.keys.length} public access keys: ${scopes.join("; ") || "none"}`, "ok");
+      } catch (error) { setState("near-account-result", safeError(error), "error"); }
+    });
+    $("near-tx-form").addEventListener("submit", async (event) => {
+      event.preventDefault(); setState("near-tx-result", "Verifying transaction status at finality…", "loading");
+      const params = new URLSearchParams({ sender_account_id: $("near-tx-sender").value.trim() });
+      try {
+        const data = await api(`/api/v1/near/transactions/${encodeURIComponent($("near-tx-hash").value.trim())}?${params}`);
+        const box = $("near-tx-result"); box.replaceChildren();
+        box.append(node("div", `${data.verified ? "Verified" : "Unverified"} Testnet transaction • ${data.transaction_hash}`, "mono"));
+        box.append(node("div", `Sender ${data.sender_account_id} • status ${JSON.stringify(data.execution_status)}`, "row-detail"));
+        if (data.verified && data.network === "testnet") {
+          const link = node("a", "Open verified Testnet explorer record");
+          const url = new URL(data.explorer_url);
+          if (url.protocol === "https:" && url.hostname === "explorer.testnet.near.org") { link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer"; box.append(link); }
+        }
+        box.className = "state ok";
+      } catch (error) { setState("near-tx-result", safeError(error), "error"); }
+    });
+
+    function renderExperimentExecution(data) {
+      const target = $("near-experiment-result"); target.replaceChildren();
+      target.append(node("div", `Request ${data.request_id} • decision ${data.decision} • signing invoked ${data.signer_invoked}`, "row-detail mono"));
+      target.append(node("div", `${data.request.amount_near} NEAR from ${data.request.sender} to ${data.request.recipient}`, "row-detail"));
+      target.append(node("div", `Transaction status: ${data.execution.status || "NOT_SUBMITTED"}`, "row-detail"));
+      if (data.explanation) target.append(node("div", data.explanation, "row-detail"));
+      const txHash = data.execution.transaction_hash;
+      if (txHash) {
+        target.append(node("div", `Transaction hash: ${txHash}`, "row-detail mono"));
+        if (data.execution.explorer_url) {
+          const label = data.execution.status === "SUCCESS" ? "Open verified successful Testnet transaction"
+            : data.execution.status === "FAILED" ? "Open verified failed Testnet transaction"
+              : "Open Testnet explorer record (final status pending)";
+          const link = node("a", label);
+          const url = new URL(data.execution.explorer_url);
+          if (url.protocol === "https:" && url.hostname === "explorer.testnet.near.org") { link.href = url.href; link.target = "_blank"; link.rel = "noopener noreferrer"; target.append(link); }
+        }
+      }
+      target.className = `state ${data.decision === "BLOCK" ? "error" : data.decision === "WARN" ? "warn" : data.execution.status === "SUCCESS" ? "ok" : "error"}`;
+      if (data.decision === "WARN") {
+        const approve = node("button", "Approve policy review", "btn btn-primary");
+        approve.type = "button";
+        approve.addEventListener("click", async () => {
+          if (!window.confirm(`Approve this WARN request for ${data.request.amount_near} NEAR to ${data.request.recipient}? This only approves policy review; broadcast still requires a separate confirmation.`)) return;
+          setBusy(approve, true, "Approving…");
+          try {
+            const result = await api(`/api/v1/near/experiment/transactions/${encodeURIComponent(data.request_id)}/approve`, { method: "POST", admin: true, timeoutMs: 60000 });
+            renderExperimentExecution(result); await loadNearExperimentHistory();
+          } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+        });
+        target.append(approve);
+      }
+      if (data.decision === "ALLOW" && data.execution.status === "AWAITING_EXPLICIT_CONFIRMATION") {
+        const confirmTransfer = node("button", "Confirm and broadcast Testnet transfer", "btn btn-primary");
+        confirmTransfer.type = "button";
+        confirmTransfer.addEventListener("click", async () => {
+          const message = `Broadcast ${data.request.amount_near} NEAR on NEAR TESTNET from ${data.request.sender} to ${data.request.recipient}? This is a live Testnet transaction. Mainnet is not used.`;
+          if (!window.confirm(message)) return;
+          setBusy(confirmTransfer, true, "Submitting…");
+          try {
+            const result = await api(`/api/v1/near/experiment/transactions/${encodeURIComponent(data.request_id)}/confirm`, {
+              method: "POST", admin: true, timeoutMs: 60000,
+              headers: { "X-Live-Testnet-Transfer-Confirmation": "CONFIRM TESTNET TRANSFER" },
+            });
+            renderExperimentExecution(result);
+            await Promise.all([loadNearExperimentStatus(), loadNearExperimentHistory(), loadAudit()]);
+          } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+        });
+        target.append(confirmTransfer);
+      }
+    }
+    async function loadNearExperimentStatus() {
+      if (!adminToken) { setState("near-experiment-status", "Enter the admin token to inspect the Testnet experiment configuration.", "empty"); return; }
+      setState("near-experiment-status", "Reading current Testnet and account state…", "loading");
+      try {
+        const data = await api("/api/v1/near/experiment/status", { admin: true, timeoutMs: 60000 });
+        const liveState = data.transaction_ready ? "ready" : data.transactions_enabled ? "misconfigured" : "disabled";
+        const summary = `Network ${data.network} • RPC ${data.rpc_status} • account ${data.sender_account || "not configured"} (${data.account_verified ? "verified" : "unverified"}) • public key ${data.public_key || "not configured"} • balance ${data.sender_balance_near ?? "unavailable"} NEAR • faucet funding ${data.faucet_funding_status} (source verified: ${data.funding_source_verified}) • authorized recipient ${data.authorized_recipient || "not configured"} (${data.recipient_verified ? "verified" : "unverified"}) • signer ${data.signer_permission_status} • live transfers ${liveState} • cap ${data.max_transfer_near} NEAR`;
+        setState("near-experiment-status", summary, data.rpc_status === "healthy" ? "ok" : "error");
+        if (data.account_explorer_url) {
+          const explorer = node("a", "Open Testnet account explorer");
+          const url = new URL(data.account_explorer_url);
+          if (url.protocol === "https:" && url.hostname === "explorer.testnet.near.org") { explorer.href = url.href; explorer.target = "_blank"; explorer.rel = "noopener noreferrer"; $("near-experiment-status").append(explorer); }
+        }
+        if (data.last_transaction_hash) {
+          $("near-experiment-status").append(node("div", `Last transaction: ${data.last_transaction_hash}`, "row-detail mono"));
+          const txLink = node("a", "Open last Testnet transaction");
+          txLink.href = `https://explorer.testnet.near.org/transactions/${encodeURIComponent(data.last_transaction_hash)}`;
+          txLink.target = "_blank"; txLink.rel = "noopener noreferrer"; $("near-experiment-status").append(txLink);
+        }
+        if (data.authorized_recipient && !$("experiment-recipient").value) $("experiment-recipient").value = data.authorized_recipient;
+      } catch (error) { setState("near-experiment-status", safeError(error), "error"); }
+    }
+    async function loadNearExperimentHistory() {
+      if (!adminToken) { setState("near-experiment-history", "Admin authentication required.", "empty"); return; }
+      try {
+        const events = await api("/api/v1/near/experiment/history?limit=40", { admin: true });
+        const target = $("near-experiment-history"); target.replaceChildren();
+        for (const event of events) {
+          const row = node("div", null, "activity-item");
+          row.append(node("div", `${event.event_type} • ${event.decision}`, "row-title"));
+          row.append(node("div", `Request ${event.request_id} • ${event.details.status || event.details.scenario || "policy decision"} • signer ${event.details.signer_invoked ?? "not recorded"}`, "row-detail mono"));
+          if (event.details.transaction_hash) row.append(node("div", `Transaction ${event.details.transaction_hash}`, "row-detail mono"));
+          target.append(row);
+        }
+        if (!events.length) target.append(node("div", "No Testnet experiment events recorded.", "row-detail"));
+        target.className = `state ${events.length ? "ok" : "empty"}`;
+      } catch (error) { setState("near-experiment-history", safeError(error), "error"); }
+    }
+    $("near-experiment-refresh").addEventListener("click", loadNearExperimentStatus);
+    $("near-experiment-history-refresh").addEventListener("click", loadNearExperimentHistory);
+    $("near-experiment-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setState("near-experiment-result", "Evaluating policy before any signing operation…", "loading");
+      try {
+        const result = await api("/api/v1/near/experiment/transactions", {
+          method: "POST", admin: true, timeoutMs: 60000, headers: { "Idempotency-Key": `near-demo-${crypto.randomUUID()}` },
+          body: JSON.stringify({ recipient: $("experiment-recipient").value.trim(), amount_near: $("experiment-amount").value, prompt: $("experiment-prompt").value }),
+        });
+        renderExperimentExecution(result);
+        await Promise.all([loadNearExperimentStatus(), loadNearExperimentHistory(), loadAudit()]);
+      } catch (error) { setState("near-experiment-result", safeError(error), "error"); }
+    });
+    document.querySelectorAll(".near-attack").forEach((button) => button.addEventListener("click", async () => {
+      setBusy(button, true, "Checking…");
+      try {
+        const result = await api(`/api/v1/near/experiment/attacks/${encodeURIComponent(button.dataset.scenario)}`, { method: "POST", admin: true });
+        const target = $("near-attack-results");
+        const row = node("div", null, "activity-item");
+        row.append(node("div", `${result.scenario}: ${result.decision} • signer invoked ${result.signer_invoked}`, "row-title"));
+        row.append(node("div", `Request ${result.request_id || result.request_ids?.join(", ")} • tx ${result.transaction_hash || "none"}`, "row-detail mono"));
+        target.prepend(row); target.className = "state ok";
+        await Promise.all([loadNearExperimentHistory(), loadAudit()]);
+      } catch (error) { setState("near-attack-results", safeError(error), "error"); }
+      finally { setBusy(button, false); }
+    }));
+
+    function renderSimulationResult(result) {
+      const card = node("article", null, "card");
+      const heading = node("div", null, "inline");
+      heading.append(node("h3", result.scenario.replaceAll("-", " ")), node("span", result.passed ? "PASS" : "FAIL", `badge ${result.passed ? "approve" : "block"}`));
+      card.append(heading);
+      card.append(node("div", `Test ID ${result.test_id}`, "row-detail mono"));
+      card.append(node("div", `Expected ${result.expected_decision} • Actual ${result.actual_decision} • ${result.execution_ms} ms`, "row-detail"));
+      card.append(node("p", result.reason, "row-detail"));
+      if (result.execution_evidence) {
+        const evidence = result.execution_evidence;
+        card.append(node("div", `Execution evidence: ${evidence.outcome} • signer invoked: ${evidence.signer_invoked} • broadcast: ${evidence.broadcast}`, "row-detail mono"));
+      }
+      card.append(node("div", `Audit request ID(s): ${result.request_ids.join(", ")}`, "row-detail mono"));
+      return card;
+    }
+    async function loadSimulationLab() {
+      if (!adminToken) {
+        $("simulation-scenarios").replaceChildren();
+        setState("simulation-state", "Admin authentication required to load scenarios.", "empty");
+        return;
+      }
+      setState("simulation-state", "Loading scenario list…", "loading");
+      try {
+        const [scenarios, scorecard] = await Promise.all([
+          api("/api/v1/simulation/scenarios", { admin: true }),
+          api("/api/v1/simulation/scorecard", { admin: true })
+        ]);
+        const body = $("simulation-scenarios"); body.replaceChildren();
+        for (const item of scenarios) {
+          const row = document.createElement("tr");
+          const name = document.createElement("td"); name.append(node("strong", item.scenario), node("div", item.description, "row-detail"));
+          const expected = document.createElement("td"); expected.append(decisionBadge(item.expected_decision));
+          const action = document.createElement("td");
+          const button = node("button", "Run", "btn"); button.type = "button";
+          button.addEventListener("click", () => runSimulation(`/api/v1/simulation/run/${encodeURIComponent(item.scenario)}`, button));
+          action.append(button); row.append(name, expected, action); body.append(row);
+        }
+        setState("simulation-state", `${scenarios.length} backend-defined scenarios loaded.`, "ok");
+        renderScorecard(scorecard);
+        const recent = scorecard.recent_runs || [];
+        $("simulation-results").replaceChildren(...recent.map(renderSimulationResult));
+      } catch (error) { setState("simulation-state", safeError(error), "error"); }
+    }
+    function renderScorecard(data) {
+      const target = $("simulation-scorecard");
+      if (!data.total) { setState("simulation-scorecard", "No simulation runs recorded yet.", "empty"); return; }
+      setState("simulation-scorecard", `${data.passed} passed • ${data.failed} failed of ${data.total} runs • ${data.pass_rate_percent}%`, data.failed ? "warn" : "ok");
+    }
+    async function runSimulation(path, button) {
+      setBusy(button, true, "Running…"); setState("simulation-state", "Running backend security scenario(s)…", "loading");
+      try {
+        const result = await api(path, { method: "POST", admin: true });
+        const runs = result.results || [result];
+        const previous = Array.from($("simulation-results").children);
+        $("simulation-results").replaceChildren(...[...runs.map(renderSimulationResult), ...previous].slice(0, 24));
+        const scorecard = result.scorecard || await api("/api/v1/simulation/scorecard", { admin: true });
+        renderScorecard(scorecard);
+        const passed = runs.filter((item) => item.passed).length;
+        const failed = runs.length - passed;
+        setState("simulation-state", `Run completed by backend: ${passed} passed, ${failed} failed.`, failed ? "warn" : "ok");
+        await Promise.all([loadOverview(), loadThreats(), loadAudit()]);
+      } catch (error) { setState("simulation-state", safeError(error), "error"); }
+      finally { setBusy(button, false); }
+    }
+    $("run-all-simulations").addEventListener("click", (event) => runSimulation("/api/v1/simulation/run-all", event.currentTarget));
+
+    function renderActivity(rows) {
+      const target = $("activity-feed");
+      target.replaceChildren();
+      if (!rows.length) {
+        empty(target, "No persisted activity yet.");
+        return;
+      }
+      for (const item of rows.slice(0, 6)) {
+        const decision = String(item.decision || "").toUpperCase();
+        const kind = decision === "APPROVE" || decision === "UPDATED" ? "approve" : decision === "BLOCK" ? "block" : "review";
+        const entry = node("div", null, `activity-item ${kind}`);
+        const rail = node("span", null, "activity-rail");
+        rail.append(node("span", null, "activity-dot"));
+        const main = node("div", null, "activity-main");
+        const title = node("div", null, "activity-title");
+        title.append(node("span", item.event_type.replaceAll("_", " ").toLowerCase()), node("time", formatDate(item.created_at)));
+        main.append(title, node("div", `${decision} · ${item.request_id}`, "activity-detail mono"));
+        entry.append(rail, main);
+        target.append(entry);
+      }
+    }
+    async function loadAudit() {
+      if (!adminToken) {
+        auditCache = [];
+        $("audit-rows").replaceChildren();
+        setState("audit-state", "Admin authentication required to load audit events.", "empty");
+        return;
+      }
+      setState("audit-state", "Loading audit events…", "loading");
+      try {
+        const rows = await api("/api/v1/audit?limit=100", { admin: true });
+        auditCache = rows;
+        const body = $("audit-rows"); body.replaceChildren();
+        for (const item of rows) {
+          const tr = document.createElement("tr");
+          for (const value of [formatDate(item.created_at), item.request_id, item.event_type, item.decision, JSON.stringify(item.details)]) {
+            const td = document.createElement("td"); td.textContent = value; tr.append(td);
+          }
+          body.append(tr);
+        }
+        setState("audit-state", rows.length ? `${rows.length} events loaded from persistent audit storage.` : "Audit API returned no events.", rows.length ? "ok" : "empty");
+      } catch (error) { auditCache = []; $("audit-rows").replaceChildren(); setState("audit-state", safeError(error), "error"); }
+    }
+    async function loadActivity() {
+      try { activityCache = await api("/api/v1/activity?limit=6"); renderActivity(activityCache); }
+      catch (error) { activityCache = []; renderActivity([]); setState("activity-feed", safeError(error), "error"); }
+    }
+    async function downloadAudit(format) {
+      if (!adminToken) { setState("audit-state", "Enter the admin token to export audit data.", "warn"); return; }
+      try {
+        const response = await fetch(`${API_BASE}/api/v1/audit/export?format=${format}`, {
+          headers: { Authorization: `Bearer ${adminToken}` }, signal: AbortSignal.timeout(12000)
+        });
+        if (!response.ok) throw new Error(`${response.status}: audit export failed`);
+        const blob = await response.blob(); const url = URL.createObjectURL(blob); const link = document.createElement("a");
+        link.href = url; link.download = format === "csv" ? "agentguard-hackathon-audit.csv" : "agentguard-hackathon-audit.json"; link.click(); URL.revokeObjectURL(url);
+      } catch (error) { setState("audit-state", safeError(error), "error"); }
+    }
+    $("export-audit").addEventListener("click", () => downloadAudit("json"));
+    $("export-audit-csv").addEventListener("click", () => downloadAudit("csv"));
+    $("verify-audit").addEventListener("click", async () => {
+      if (!adminToken) { setState("audit-integrity", "Enter the admin token to verify audit integrity.", "warn"); return; }
+      setState("audit-integrity", "Verifying audit hash chain…", "loading");
+      try {
+        const result = await api("/api/v1/audit/verify", { admin: true });
+        setState("audit-integrity", result.valid ? `Valid SHA-256 chain • ${result.verified_count} events verified. This detects edits but does not make SQLite immutable.` : `Integrity failure at event ${result.invalid_event_id} • ${result.verified_count} preceding events verified.`, result.valid ? "ok" : "error");
+      } catch (error) { setState("audit-integrity", safeError(error), "error"); }
+    });
+
+    async function loadKillSwitch() {
+      try {
+        const data = await api("/api/v1/kill-switch");
+        setState("kill-switch-state", `Global kill switch ${data.enabled ? "ENABLED" : "disabled"} • policy v${data.policy_version}`, data.enabled ? "error" : "ok");
+        const button = $("kill-switch-toggle"); button.disabled = !adminToken; button.textContent = data.enabled ? "Disable global kill switch" : "Enable global kill switch";
+        button.dataset.enabled = String(data.enabled);
+      } catch (error) { setState("kill-switch-state", safeError(error), "error"); $("kill-switch-toggle").disabled = true; }
+    }
+    $("kill-switch-toggle").addEventListener("click", async (event) => {
+      const button = event.currentTarget; if (!adminToken) { setState("kill-switch-state", "Enter the admin token to change the kill switch.", "warn"); return; }
+      setBusy(button, true, "Updating…");
+      try { await api("/api/v1/kill-switch", { method: "PUT", admin: true, body: JSON.stringify({ enabled: button.dataset.enabled !== "true" }) }); await Promise.all([loadKillSwitch(), loadOverview(), loadActivity(), loadAudit()]); }
+      catch (error) { setState("kill-switch-state", safeError(error), "error"); }
+      finally { button.disabled = false; await loadKillSwitch(); }
+    });
+
+    async function loadSettings() {
+      setState("settings-state", "Loading backend settings…", "loading");
+      try {
+        const data = await api("/api/v1/settings");
+        const list = $("settings-list"); list.replaceChildren();
+        const entries = [
+          ["Application", data.app_name], ["Environment", data.environment], ["Database", data.database_backend],
+          ["NEAR network", data.near_network_required], ["RPC configured", data.near_rpc_configured ? "Yes" : "No"],
+          ["RPC timeout", `${data.near_rpc_timeout_seconds} seconds`], ["Admin auth", data.admin_auth_configured ? "Configured" : "Not configured"],
+          ["Transaction signing", data.transaction_signing_enabled ? "Enabled" : "Disabled"],
+          ["Transaction submission", data.transaction_submission_enabled ? "Enabled" : "Disabled"]
+        ];
+        for (const [key, value] of entries) { const row = node("div", null, "row"); row.append(node("dt", key, "row-title"), node("dd", value, "row-detail")); list.append(row); }
+        setState("settings-state", "Settings loaded from backend; no secrets returned.", "ok");
+      } catch (error) { setState("settings-state", safeError(error), "error"); }
+    }
+    $("admin-form").addEventListener("submit", (event) => {
+      event.preventDefault(); adminToken = $("admin-token").value;
+      $("admin-token").value = "";
+      setState("admin-state", adminToken ? "Admin token held in page memory for this tab session." : "No admin token entered.", adminToken ? "ok" : "empty");
+      refreshData();
+    });
+    $("clear-admin").addEventListener("click", () => { adminToken = ""; $("admin-token").value = ""; setState("admin-state", "Admin token cleared from page memory.", "empty"); refreshData(); });
+
+    async function loadTelegram() {
+      setState("telegram-state", "Checking Telegram integration…", "loading");
+      try {
+        const data = await api("/api/v1/telegram/status");
+        setState("telegram-state", `${data.status.toUpperCase()}: ${data.message}`, data.enabled && data.configured ? "ok" : "warn");
+        $("telegram-test").disabled = !(data.configured && adminToken);
+      } catch (error) { setState("telegram-state", safeError(error), "error"); }
+    }
+    $("telegram-test").addEventListener("click", async (event) => {
+      const button = event.currentTarget; setBusy(button, true, "Sending…");
+      try { await api("/api/v1/telegram/test", { method: "POST", admin: true }); setState("telegram-state", "Test notification delivery confirmed by Telegram.", "ok"); }
+      catch (error) { setState("telegram-state", safeError(error), "error"); }
+      finally { button.disabled = false; await loadTelegram(); }
+    });
+    async function refreshData() {
+      await Promise.allSettled([loadOverview(), loadAgents(), loadThreats(), loadPolicy(), loadApprovals(), loadAudit(), loadActivity(), loadKillSwitch(), loadSettings(), loadTelegram(), loadSimulationLab(), checkRpcHealth(), loadNearExperimentStatus(), loadNearExperimentHistory()]);
+    }
+    $("refresh-all").addEventListener("click", refreshData);
+    function updateActiveNavigation() {
+      const active = window.location.hash || "#overview";
+      document.querySelectorAll(".nav a").forEach((link) => {
+        if (link.getAttribute("href") === active) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    window.addEventListener("hashchange", updateActiveNavigation);
+    updateActiveNavigation();
+    refreshData();
+  </script>
+</body>
+</html>
